@@ -3,30 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>正負數練習系統</title>
+  <title>正負數練習系統 - 競速版</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     .mode-card-selected { border-color: #4f46e5 !important; background-color: #f5f3ff !important; transform: translateY(-4px); }
     input:focus { outline: none; border-color: #4f46e5 !important; }
-    .correct-flash { animation: flash 0.5s ease-out; }
+    .correct-flash { animation: flash 0.4s ease-out; }
     @keyframes flash {
       0% { background-color: transparent; }
       50% { background-color: #dcfce7; }
       100% { background-color: transparent; }
     }
-    /* 虛擬按鍵樣式 */
     .key-btn {
       display: flex; align-items: center; justify-content: center;
       background-color: white; border: 1px solid #e5e7eb;
       border-radius: 0.75rem; font-size: 1.5rem; font-weight: bold;
-      height: 60px; transition: all 0.1s; cursor: pointer; user-select: none;
+      height: 60px; transition: all 0.05s; cursor: pointer; user-select: none;
     }
-    .key-btn:active { background-color: #f3f4f6; transform: scale(0.95); }
-    .key-btn-op { background-color: #f9fafb; color: #4f46e5; }
-    .key-btn-back { 
-      background-color: #fee2e2; color: #ef4444; 
-      height: 100%; min-height: 250px; /* 調整高度以匹配左側四列 */
-    }
+    .key-btn:active { background-color: #e0e7ff; transform: scale(0.92); }
+    .key-btn-op { background-color: #f9fafb; color: #4f46e5; border-color: #c7d2fe; }
+    .key-btn-back { background-color: #fee2e2; color: #ef4444; height: 100%; min-height: 260px; }
   </style>
 </head>
 <body class="bg-gray-100 overflow-x-hidden">
@@ -56,9 +52,8 @@
         app.innerHTML = `
           <div class="min-h-screen flex items-center justify-center p-4">
             <div class="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full">
-              <h1 class="text-2xl font-bold text-center mb-6">正負數加減練習</h1>
-              <input type="text" id="nameInput" class="w-full px-4 py-3 border-2 rounded-xl mb-4" 
-                     placeholder="請輸入姓名" value="${state.name}">
+              <h1 class="text-2xl font-bold text-center mb-6">正負數練習 (競速版)</h1>
+              <input type="text" id="nameInput" class="w-full px-4 py-3 border-2 rounded-xl mb-4" placeholder="請輸入姓名" value="${state.name}">
               <button onclick="handleStart()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700">下一步</button>
             </div>
           </div>`;
@@ -67,7 +62,6 @@
         input.addEventListener('keydown', (e) => e.key === 'Enter' && handleStart());
         input.focus();
       } 
-      
       else if (state.mode === 'select') {
         app.innerHTML = `
           <div class="min-h-screen flex flex-col items-center justify-center p-4">
@@ -85,59 +79,56 @@
             <button onclick="goPractice()" class="mt-8 bg-black text-white px-12 py-3 rounded-xl font-bold">開始練習 (Enter)</button>
           </div>`;
       }
-
       else if (state.mode === 'play') {
         app.innerHTML = `
           <div class="min-h-screen p-4 flex flex-col items-center ${state.isAnswerCorrect ? 'correct-flash' : ''}">
             <div class="w-full max-w-xl flex justify-between bg-white p-4 rounded-xl shadow mb-6">
-              <span class="font-bold">${state.name}</span>
+              <span class="font-bold text-gray-600">${state.name}</span>
               <div id="timer-box" class="text-indigo-600 font-mono font-bold text-xl">
                 ${state.practiceType === 'timed' ? formatTime(state.timeLeft) : `進度: ${state.stats.correct}/${state.target}`}
               </div>
             </div>
             
             <div class="text-center mb-6">
-              <div class="text-5xl font-bold mb-6">${state.problem.display} = ?</div>
+              <div class="text-6xl font-bold mb-6 text-gray-800">${state.problem.display} = ?</div>
               <div class="relative h-16">
-                <input type="text" id="ansInput" readonly
-                       class="text-5xl border-b-4 ${state.isAnswerCorrect ? 'border-green-500 text-green-500' : 'border-gray-300'} w-48 text-center bg-transparent outline-none"
-                       value="${state.userAns}">
+                <input type="text" id="ansInput" readonly class="text-5xl border-b-4 ${state.isAnswerCorrect ? 'border-green-500 text-green-500' : 'border-gray-300'} w-48 text-center bg-transparent outline-none" value="${state.userAns}">
               </div>
             </div>
 
             <div class="flex gap-2 w-full max-w-[320px]">
               <div class="flex-grow flex flex-col gap-2">
-                <div class="grid grid-cols-2 gap-2">
-                  <div onclick="pressKey('-')" class="key-btn key-btn-op">-</div>
-                  <div onclick="pressKey('0')" class="key-btn key-btn-op">0</div>
-                </div>
                 <div class="grid grid-cols-3 gap-2">
-                  <div onclick="pressKey('1')" class="key-btn">1</div>
-                  <div onclick="pressKey('2')" class="key-btn">2</div>
-                  <div onclick="pressKey('3')" class="key-btn">3</div>
-                  <div onclick="pressKey('4')" class="key-btn">4</div>
-                  <div onclick="pressKey('5')" class="key-btn">5</div>
-                  <div onclick="pressKey('6')" class="key-btn">6</div>
                   <div onclick="pressKey('7')" class="key-btn">7</div>
                   <div onclick="pressKey('8')" class="key-btn">8</div>
                   <div onclick="pressKey('9')" class="key-btn">9</div>
+                  
+                  <div onclick="pressKey('4')" class="key-btn">4</div>
+                  <div onclick="pressKey('5')" class="key-btn">5</div>
+                  <div onclick="pressKey('6')" class="key-btn">6</div>
+                  
+                  <div onclick="pressKey('1')" class="key-btn">1</div>
+                  <div onclick="pressKey('2')" class="key-btn">2</div>
+                  <div onclick="pressKey('3')" class="key-btn">3</div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <div onclick="pressKey('-')" class="key-btn key-btn-op font-black text-2xl">-</div>
+                  <div onclick="pressKey('0')" class="key-btn key-btn-op">0</div>
                 </div>
               </div>
-              
               <div class="w-16">
                 <div onclick="pressKey('back')" class="key-btn key-btn-back text-2xl flex items-center justify-center">⌫</div>
               </div>
             </div>
-            ${state.isAnswerCorrect ? '<div class="text-green-500 font-bold mt-4 text-2xl animate-bounce">正確！</div>' : ''}
+            ${state.isAnswerCorrect ? '<div class="text-green-500 font-bold mt-4 text-2xl">正確！</div>' : ''}
           </div>`;
       }
-
       else if (state.mode === 'end') {
         app.innerHTML = `
           <div class="min-h-screen flex items-center justify-center p-4">
             <div class="bg-white p-8 rounded-2xl shadow-xl text-center w-full max-w-sm">
               <h2 class="text-2xl font-bold mb-4">挑戰結束</h2>
-              <p class="text-gray-600 mb-2">完成題數: ${state.stats.correct}</p>
+              <p class="text-gray-600 mb-2 font-bold text-lg text-indigo-600">答對題數: ${state.stats.correct}</p>
               <button onclick="location.reload()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">再練一次</button>
             </div>
           </div>`;
@@ -204,7 +195,7 @@
       setTimeout(() => {
         if (state.practiceType === 'count' && state.stats.correct >= state.target) endGame();
         else nextProblem();
-      }, 800);
+      }, 500); // 縮短答對後的停頓時間，讓節奏更快
     }
 
     function endGame() {
