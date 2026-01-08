@@ -83,4 +83,118 @@
             
             <div class="text-center mb-6">
               <div class="text-6xl font-bold mb-6 text-gray-800">${state.problem.display} = ?</div>
-              <input type="text" readonly class="text-5xl border-b-4 ${state.isAnswerCorrect ? 'border-green-500 text-green-500' : 'border-gray-300'} w-48
+              <input type="text" readonly class="text-5xl border-b-4 ${state.isAnswerCorrect ? 'border-green-500 text-green-500' : 'border-gray-300'} w-48 text-center bg-transparent outline-none mb-8" value="${state.userAns}">
+            </div>
+
+            <div class="flex gap-2 w-full max-w-[320px]">
+              <div class="flex-grow flex flex-col gap-2">
+                <div class="grid grid-cols-3 gap-2">
+                  <div onclick="pressKey('7')" class="key-btn">7</div>
+                  <div onclick="pressKey('8')" class="key-btn">8</div>
+                  <div onclick="pressKey('9')" class="key-btn">9</div>
+                  <div onclick="pressKey('4')" class="key-btn">4</div>
+                  <div onclick="pressKey('5')" class="key-btn">5</div>
+                  <div onclick="pressKey('6')" class="key-btn">6</div>
+                  <div onclick="pressKey('1')" class="key-btn">1</div>
+                  <div onclick="pressKey('2')" class="key-btn">2</div>
+                  <div onclick="pressKey('3')" class="key-btn">3</div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <div onclick="pressKey('0')" class="key-btn key-btn-op">0</div>
+                  <div onclick="pressKey('-')" class="key-btn key-btn-op font-black text-2xl">-</div>
+                </div>
+              </div>
+              <div class="w-16">
+                <div onclick="pressKey('back')" class="key-btn key-btn-back text-2xl">⌫</div>
+              </div>
+            </div>
+          </div>`;
+      }
+      else if (state.mode === 'end') {
+        const accuracy = state.stats.total > 0 ? ((state.stats.correct / state.stats.total) * 100).toFixed(1) : 0;
+        const avgSpeed = state.allTimes.length > 0 ? (state.allTimes.reduce((a,b)=>a+b, 0) / state.allTimes.length).toFixed(2) : 0;
+        app.innerHTML = `
+          <div class="min-h-screen flex items-center justify-center p-4">
+            <div class="bg-white p-8 rounded-2xl shadow-xl text-center w-full max-w-sm">
+              <h2 class="text-2xl font-bold mb-4">結果分析</h2>
+              <div class="space-y-2 text-left mb-6">
+                <p class="flex justify-between"><span>答對題數:</span> <span class="font-bold">${state.stats.correct}</span></p>
+                <p class="flex justify-between"><span>答對率:</span> <span class="font-bold">${accuracy}%</span></p>
+                <p class="flex justify-between"><span>平均速度:</span> <span class="font-bold">${avgSpeed}s</span></p>
+                <p class="flex justify-between"><span>使用退格題數:</span> <span class="font-bold">${state.totalBackspacesProblems}</span></p>
+              </div>
+              <button onclick="location.reload()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">再試一次</button>
+            </div>
+          </div>`;
+      }
+    }
+
+    // --- 邏輯部分保持不變 ---
+    function startPractice(type) {
+      state.practiceType = type; state.mode = 'play';
+      state.stats = { correct: 0, total: 0 }; state.allTimes = []; state.totalBackspacesProblems = 0;
+      nextProblem();
+      if (type === 'timed') {
+        state.timeLeft = 120;
+        timer = setInterval(() => { state.timeLeft--; if (state.timeLeft <= 0) endGame(); else render(); }, 1000);
+      }
+    }
+
+    function nextProblem() {
+      const n1 = Math.floor(Math.random() * 21) - 10;
+      const n2 = Math.floor(Math.random() * 21) - 10;
+      const op = Math.random() > 0.5 ? '+' : '-';
+      state.problem = { answer: op==='+'?n1+n2:n1-n2, display: `${n1}${op}${n2<0?'('+n2+')':n2}`, start: Date.now() };
+      state.userAns = ''; state.isAnswerCorrect = false; state.backspaceCount = 0;
+      render();
+    }
+
+    function pressKey(key) {
+      if (state.isAnswerCorrect) return;
+      if (key === 'back') { state.userAns = state.userAns.slice(0, -1); state.backspaceCount++; }
+      else if (key === '-') { if (state.userAns === '') state.userAns = '-'; }
+      else { if (state.userAns.length < 5) state.userAns += key; }
+      render();
+      if (state.userAns !== '' && state.userAns !== '-' && parseInt(state.userAns) === state.problem.answer) handleCorrect();
+    }
+
+    function handleCorrect() {
+      state.isAnswerCorrect = true;
+      const timeSpent = (Date.now() - state.problem.start) / 1000;
+      state.allTimes.push(timeSpent);
+      state.stats.correct++; state.stats.total++;
+      if (state.backspaceCount > 0) state.totalBackspacesProblems++;
+      render();
+      
+      const accuracy = ((state.stats.correct / state.stats.total) * 100).toFixed(1);
+      fetch(`${SCRIPT_URL}?action=save&studentName=${state.name}&problem=${state.problem.display}&correctAnswer=${state.problem.answer}&userAnswer=${state.userAns}&isCorrect=true&timeSpent=${timeSpent}`, { mode: 'no-cors' });
+
+      setTimeout(() => {
+        if (state.practiceType === 'count' && state.stats.correct >= state.target) endGame();
+        else nextProblem();
+      }, 500);
+    }
+
+    function endGame() {
+      clearInterval(timer);
+      const accuracy = ((state.stats.correct / state.stats.total) * 100).toFixed(1);
+      const avgSpeed = (state.allTimes.reduce((a,b)=>a+b, 0) / state.allTimes.length).toFixed(2);
+      fetch(`${SCRIPT_URL}?action=saveSummary&studentName=${state.name}&practiceType=${state.practiceType}&correctCount=${state.stats.correct}&accuracy=${accuracy}&avgSpeed=${avgSpeed}&backspaceCount=${state.totalBackspacesProblems}`, { mode: 'no-cors' });
+      state.mode = 'end';
+      render();
+    }
+
+    function handleStart() { if (state.name.trim()) { state.mode = 'select'; render(); } else { alert('請輸入姓名'); } }
+    
+    window.onkeydown = (e) => {
+      if (state.mode === 'play') {
+        if (e.key >= '0' && e.key <= '9') pressKey(e.key);
+        if (e.key === '-') pressKey('-');
+        if (e.key === 'Backspace') pressKey('back');
+      }
+    };
+
+    render();
+  </script>
+</body>
+</html>
