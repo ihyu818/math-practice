@@ -3,112 +3,84 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>正負數練習 - 專業統計版</title>
+  <title>正負數練習 - 競速版 V2</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    .key-btn { display: flex; align-items: center; justify-content: center; background-color: white; border: 1px solid #e5e7eb; border-radius: 0.75rem; font-size: 1.5rem; font-weight: bold; height: 60px; transition: all 0.05s; cursor: pointer; user-select: none; }
+    .mode-card-selected { border-color: #4f46e5 !important; background-color: #f5f3ff !important; transform: translateY(-4px); }
+    input:focus { outline: none; border-color: #4f46e5 !important; }
+    .correct-flash { animation: flash 0.4s ease-out; }
+    @keyframes flash { 0% { background-color: transparent; } 50% { background-color: #dcfce7; } 100% { background-color: transparent; } }
+    
+    .key-btn {
+      display: flex; align-items: center; justify-content: center;
+      background-color: white; border: 1px solid #e5e7eb;
+      border-radius: 0.75rem; font-size: 1.5rem; font-weight: bold;
+      height: 60px; transition: all 0.05s; cursor: pointer; user-select: none;
+    }
     .key-btn:active { background-color: #e0e7ff; transform: scale(0.92); }
     .key-btn-op { background-color: #f9fafb; color: #4f46e5; border-color: #c7d2fe; }
     .key-btn-back { background-color: #fee2e2; color: #ef4444; height: 100%; min-height: 260px; }
-    .correct-flash { animation: flash 0.4s ease-out; }
-    @keyframes flash { 0% { background-color: transparent; } 50% { background-color: #dcfce7; } 100% { background-color: transparent; } }
   </style>
 </head>
 <body class="bg-gray-100 overflow-x-hidden">
   <div id="app"></div>
 
   <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5SPY0XNjPWaRAgSmSZx1cSgTTeuACaT17Lx96Oy0TkALO0mgOKA-mr3KuUtFCNVir2Q/exec'; // 這裡請填入你的部署網址
-
+    // 請確保這裡填入您的 SCRIPT_URL
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5SPY0XNjPWaRAgSmSZx1cSgTTeuACaT17Lx96Oy0TkALO0mgOKA-mr3KuUtFCNVir2Q/exec';
+    
     let state = {
       mode: 'login', name: '', practiceType: 'timed', problem: null, userAns: '',
       isAnswerCorrect: false, stats: { correct: 0, total: 0 },
       timeLeft: 120, target: 120,
-      backspaceCount: 0, // 當題是否有按過退格
-      totalBackspacesProblems: 0, // 總共有幾題用了退格
-      allTimes: [] // 記錄每一題的時間
+      backspaceCount: 0, totalBackspacesProblems: 0, allTimes: [] 
     };
 
     let timer = null;
 
     function render() {
       const app = document.getElementById('app');
+      
       if (state.mode === 'login') {
-        app.innerHTML = `<div class="min-h-screen flex items-center justify-center p-4"><div class="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full"><h1 class="text-2xl font-bold text-center mb-6">正負數練習系統</h1><input type="text" id="nameInput" class="w-full px-4 py-3 border-2 rounded-xl mb-4" placeholder="輸入姓名" value="${state.name}"><button onclick="handleStart()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">開始</button></div></div>`;
-        document.getElementById('nameInput').focus();
-        document.getElementById('nameInput').oninput = (e) => state.name = e.target.value;
+        app.innerHTML = `
+          <div class="min-h-screen flex items-center justify-center p-4">
+            <div class="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full">
+              <h1 class="text-2xl font-bold text-center mb-6">正負數練習系統</h1>
+              <input type="text" id="nameInput" class="w-full px-4 py-3 border-2 rounded-xl mb-4" placeholder="請輸入姓名" value="${state.name}">
+              <button onclick="handleStart()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700">下一步</button>
+            </div>
+          </div>`;
+        const input = document.getElementById('nameInput');
+        input.focus();
+        input.oninput = (e) => state.name = e.target.value;
+        input.onkeydown = (e) => e.key === 'Enter' && handleStart();
       } 
       else if (state.mode === 'select') {
-        app.innerHTML = `<div class="min-h-screen flex flex-col items-center justify-center p-4"><h2 class="text-xl font-bold mb-6">選擇模式</h2><div class="grid grid-cols-2 gap-4 w-full max-w-md"><div onclick="startPractice('timed')" class="p-6 bg-white border-2 rounded-2xl cursor-pointer text-center font-bold">計時模式</div><div onclick="startPractice('count')" class="p-6 bg-white border-2 rounded-2xl cursor-pointer text-center font-bold">題數模式</div></div></div>`;
+        app.innerHTML = `
+          <div class="min-h-screen flex flex-col items-center justify-center p-4">
+            <h2 class="text-xl font-bold mb-6 text-gray-700">選擇練習模式</h2>
+            <div class="grid grid-cols-2 gap-4 w-full max-w-[320px]">
+              <div onclick="startPractice('timed')" class="p-6 bg-white border-2 border-indigo-100 rounded-2xl cursor-pointer text-center hover:bg-indigo-50 transition">
+                <div class="font-bold text-lg">計時模式</div>
+                <div class="text-gray-400 text-sm">120 秒</div>
+              </div>
+              <div onclick="startPractice('count')" class="p-6 bg-white border-2 border-indigo-100 rounded-2xl cursor-pointer text-center hover:bg-indigo-50 transition">
+                <div class="font-bold text-lg">題數模式</div>
+                <div class="text-gray-400 text-sm">120 題</div>
+              </div>
+            </div>
+          </div>`;
       }
       else if (state.mode === 'play') {
-        app.innerHTML = `<div class="min-h-screen p-4 flex flex-col items-center ${state.isAnswerCorrect ? 'correct-flash' : ''}"><div class="w-full max-w-xl flex justify-between bg-white p-4 rounded-xl shadow mb-6"><span class="font-bold">${state.name}</span><div id="timer-box" class="text-indigo-600 font-bold">${state.practiceType === 'timed' ? state.timeLeft + 's' : '進度: '+state.stats.correct}</div></div><div class="text-6xl font-bold mb-10">${state.problem.display} = ?</div><input type="text" readonly class="text-5xl border-b-4 w-48 text-center bg-transparent mb-8" value="${state.userAns}"><div class="flex gap-2 w-full max-w-[320px]"><div class="flex-grow grid grid-cols-3 gap-2"><div onclick="pressKey('7')" class="key-btn">7</div><div onclick="pressKey('8')" class="key-btn">8</div><div onclick="pressKey('9')" class="key-btn">9</div><div onclick="pressKey('4')" class="key-btn">4</div><div onclick="pressKey('5')" class="key-btn">5</div><div onclick="pressKey('6')" class="key-btn">6</div><div onclick="pressKey('1')" class="key-btn">1</div><div onclick="pressKey('2')" class="key-btn">2</div><div onclick="pressKey('3')" class="key-btn">3</div><div onclick="pressKey('-')" class="key-btn key-btn-op">-</div><div onclick="pressKey('0')" class="key-btn">0</div></div><div onclick="pressKey('back')" class="key-btn key-btn-back w-16">⌫</div></div></div>`;
-      }
-      else if (state.mode === 'end') {
-        const accuracy = ((state.stats.correct / state.stats.total) * 100).toFixed(1);
-        const avgSpeed = (state.allTimes.reduce((a,b)=>a+b, 0) / state.allTimes.length).toFixed(2);
-        app.innerHTML = `<div class="min-h-screen flex items-center justify-center p-4"><div class="bg-white p-8 rounded-2xl shadow-xl text-center w-full max-w-sm"><h2 class="text-2xl font-bold mb-4">結果分析</h2><p>答對題數: ${state.stats.correct}</p><p>答對率: ${accuracy}%</p><p>平均速度: ${avgSpeed}s</p><p>修改題數: ${state.totalBackspacesProblems}</p><button onclick="location.reload()" class="mt-6 w-full bg-indigo-600 text-white py-3 rounded-xl">再試一次</button></div></div>`;
-      }
-    }
-
-    function startPractice(type) {
-      state.practiceType = type; state.mode = 'play';
-      state.stats = { correct: 0, total: 0 }; state.allTimes = []; state.totalBackspacesProblems = 0;
-      nextProblem();
-      if (type === 'timed') {
-        state.timeLeft = 120;
-        timer = setInterval(() => { state.timeLeft--; if (state.timeLeft <= 0) endGame(); else render(); }, 1000);
-      }
-    }
-
-    function nextProblem() {
-      const n1 = Math.floor(Math.random() * 21) - 10;
-      const n2 = Math.floor(Math.random() * 21) - 10;
-      const op = Math.random() > 0.5 ? '+' : '-';
-      state.problem = { answer: op==='+'?n1+n2:n1-n2, display: `${n1}${op}${n2<0?'('+n2+')':n2}`, start: Date.now() };
-      state.userAns = ''; state.isAnswerCorrect = false; state.backspaceCount = 0;
-      render();
-    }
-
-    function pressKey(key) {
-      if (state.isAnswerCorrect) return;
-      if (key === 'back') { state.userAns = state.userAns.slice(0, -1); state.backspaceCount++; }
-      else if (key === '-') { if (state.userAns === '') state.userAns = '-'; }
-      else { if (state.userAns.length < 5) state.userAns += key; }
-      render();
-      if (parseInt(state.userAns) === state.problem.answer) handleCorrect();
-    }
-
-    function handleCorrect() {
-      state.isAnswerCorrect = true;
-      const timeSpent = (Date.now() - state.problem.start) / 1000;
-      state.allTimes.push(timeSpent);
-      state.stats.correct++; state.stats.total++;
-      if (state.backspaceCount > 0) state.totalBackspacesProblems++;
-      
-      render();
-      // 存入第一頁 (詳細)
-      fetch(`${SCRIPT_URL}?action=save&studentName=${state.name}&problem=${state.problem.display}&correctAnswer=${state.problem.answer}&userAnswer=${state.userAns}&isCorrect=true&timeSpent=${timeSpent}`, { mode: 'no-cors' });
-
-      setTimeout(() => {
-        if (state.practiceType === 'count' && state.stats.correct >= state.target) endGame();
-        else nextProblem();
-      }, 500);
-    }
-
-    function endGame() {
-      clearInterval(timer);
-      const accuracy = ((state.stats.correct / state.stats.total) * 100).toFixed(1);
-      const avgSpeed = (state.allTimes.reduce((a,b)=>a+b, 0) / state.allTimes.length).toFixed(2);
-      // 存入第二頁 (總結)
-      fetch(`${SCRIPT_URL}?action=saveSummary&studentName=${state.name}&practiceType=${state.practiceType}&correctCount=${state.stats.correct}&accuracy=${accuracy}&avgSpeed=${avgSpeed}&backspaceCount=${state.totalBackspacesProblems}`, { mode: 'no-cors' });
-      state.mode = 'end';
-      render();
-    }
-
-    function handleStart() { if (state.name.trim()) { state.mode = 'select'; render(); } }
-    render();
-  </script>
-</body>
-</html>
-
+        app.innerHTML = `
+          <div class="min-h-screen p-4 flex flex-col items-center ${state.isAnswerCorrect ? 'correct-flash' : ''}">
+            <div class="w-full max-w-xl flex justify-between bg-white p-4 rounded-xl shadow mb-6">
+              <span class="font-bold text-gray-600">${state.name}</span>
+              <div id="timer-box" class="text-indigo-600 font-mono font-bold text-xl">
+                ${state.practiceType === 'timed' ? state.timeLeft + 's' : '進度: ' + state.stats.correct}
+              </div>
+            </div>
+            
+            <div class="text-center mb-6">
+              <div class="text-6xl font-bold mb-6 text-gray-800">${state.problem.display} = ?</div>
+              <input type="text" readonly class="text-5xl border-b-4 ${state.isAnswerCorrect ? 'border-green-500 text-green-500' : 'border-gray-300'} w-48
