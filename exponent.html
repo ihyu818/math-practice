@@ -101,4 +101,141 @@
               <h2 class="text-2xl font-bold mb-4 text-emerald-600 italic">DONE!</h2>
               <div class="text-left space-y-2 mb-6 border-y py-4 text-sm font-medium">
                 <p class="flex justify-between"><span>總作答數:</span> <span>${total}</span></p>
-                <p class="flex justify-between text-green-600"><span>一次到位:</span> <span>${state.results.perfect.length
+                <p class="flex justify-between text-green-600"><span>一次到位:</span> <span>${state.results.perfect.length}</span></p>
+                <p class="flex justify-between text-indigo-600"><span>正確率:</span> <span>${accuracy}%</span></p>
+                <p class="flex justify-between text-orange-500"><span>修正次數:</span> <span>${state.results.corrected.length}</span></p>
+              </div>
+              <button onclick="location.reload()" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold mb-3 shadow-lg shadow-emerald-200">再練一次</button>
+              <button onclick="location.href='index.html'" class="w-full bg-gray-100 text-gray-500 py-3 rounded-xl font-bold tracking-widest">選單頁</button>
+            </div>
+          </div>`;
+      }
+    }
+
+    function handleStart() { if (state.name.trim()) { state.mode = 'select'; render(); } else { alert('請輸入姓名'); } }
+
+    function startPractice(type) {
+      state.practiceType = type; state.mode = 'play';
+      state.results = { perfect: [], corrected: [] };
+      state.target = 20;
+      nextProblem();
+      if (type === 'timed') {
+        state.timeLeft = 120;
+        timer = setInterval(() => { 
+          state.timeLeft--; 
+          if (state.timeLeft <= 0) endGame(); 
+          else { const tb = document.getElementById('timer-box'); if(tb) tb.innerText = state.timeLeft + 's'; } 
+        }, 1000);
+      }
+    }
+
+    function nextProblem() {
+      let a = Math.floor(Math.random() * 9) + 2; // 分子 2-10
+      let b = Math.floor(Math.random() * 8) + 2; // 分母 2-9
+      const type = Math.floor(Math.random() * 3); 
+      let html = "";
+      let targetVal = 0;
+      let rawTextProblem = "";
+
+      if (type === 0) { // 根式 √[b](2^a)
+        targetVal = a / b;
+        rawTextProblem = `root(${b}, 2^${a})`;
+        html = `<div class="inline-block relative math-font text-5xl pt-2">
+                  <span class="text-xl absolute -top-1 -left-4 font-bold italic">${b === 2 ? '' : b}</span>
+                  <span>√</span><span class="border-t-4 border-black px-1">2<sup>${a}</sup></span>
+                </div>`;
+      } else if (type === 1) { // 分式 1/2^a
+        targetVal = -a;
+        rawTextProblem = `1 / 2^${a}`;
+        html = `<div class="inline-flex flex-col items-center math-font text-5xl">
+                  <div class="border-b-2 border-black px-4 leading-none pb-1">1</div>
+                  <div class="leading-none pt-2">2<sup>${a}</sup></div>
+                </div>`;
+      } else { // 綜合 1/√[b](2^a)
+        targetVal = -(a / b);
+        rawTextProblem = `1 / root(${b}, 2^${a})`;
+        html = `<div class="inline-flex flex-col items-center math-font text-4xl">
+                  <div class="border-b-2 border-black px-4 leading-none pb-1">1</div>
+                  <div class="relative pt-4">
+                    <span class="text-sm absolute top-1 -left-3 font-bold italic">${b === 2 ? '' : b}</span>
+                    <span>√</span><span class="border-t-2 border-black px-1">2<sup>${a}</sup></span>
+                  </div>
+                </div>`;
+      }
+
+      state.problem = { target: targetVal, html: html, raw: rawTextProblem, start: Date.now() };
+      state.userAns = ''; state.isAnswerCorrect = false; state.currentBackspaces = 0; state.currentKeyLog = [];
+      render();
+    }
+
+    function pressKey(key) {
+      if (state.isAnswerCorrect) return;
+      state.currentKeyLog.push(key === 'back' ? '⌫' : key);
+      
+      if (key === 'back') { 
+        state.userAns = state.userAns.slice(0, -1); 
+        state.currentBackspaces++; 
+      } else { 
+        if (state.userAns.length < 10) state.userAns += key; 
+      }
+      render();
+
+      // 數值比對邏輯 (關鍵點)
+      if (state.userAns !== "" && state.userAns !== "-" && !state.userAns.endsWith('/')) {
+        try {
+          let userVal = 0;
+          if (state.userAns.includes('/')) {
+            const parts = state.userAns.split('/');
+            userVal = parseFloat(parts[0]) / parseFloat(parts[1]);
+          } else {
+            userVal = parseFloat(state.userAns);
+          }
+          
+          if (!isNaN(userVal) && Math.abs(userVal - state.problem.target) < 0.0001) {
+            handleCorrect();
+          }
+        } catch(e) {}
+      }
+    }
+
+    function handleCorrect() {
+      state.isAnswerCorrect = true;
+      const timeSpent = (Date.now() - state.problem.start) / 1000;
+      const usedBack = state.currentBackspaces > 0;
+      const keyLogStr = state.currentKeyLog.join('>');
+      
+      if (usedBack) state.results.corrected.push(timeSpent);
+      else state.results.perfect.push(timeSpent);
+      
+      render();
+      
+      fetch(`${SCRIPT_URL}?action=save&type=Exp&studentName=${encodeURIComponent(state.name)}&problem=${encodeURIComponent(state.problem.raw)}&correctAnswer=${state.problem.target.toFixed(4)}&userAnswer=${encodeURIComponent(state.userAns)}&isCorrect=true&timeSpent=${timeSpent}&usedBack=${usedBack}&keyLog=${encodeURIComponent(keyLogStr)}`, { mode: 'no-cors' });
+
+      setTimeout(() => { 
+        if (state.practiceType === 'count' && state.results.perfect.length >= state.target) endGame(); 
+        else nextProblem(); 
+      }, 600);
+    }
+
+    function endGame() {
+      clearInterval(timer);
+      const total = state.results.perfect.length + state.results.corrected.length;
+      const accuracy = total > 0 ? ((state.results.perfect.length / total) * 100).toFixed(1) : 0;
+      const avgPerfect = state.results.perfect.length > 0 ? (state.results.perfect.reduce((a,b)=>a+b, 0) / state.results.perfect.length).toFixed(2) : 0;
+      const avgCorrected = state.results.corrected.length > 0 ? (state.results.corrected.reduce((a,b)=>a+b, 0) / state.results.corrected.length).toFixed(2) : 0;
+
+      fetch(`${SCRIPT_URL}?action=saveSummary&type=Exp&studentName=${encodeURIComponent(state.name)}&practiceType=Exponent&totalCount=${total}&perfectCount=${state.results.perfect.length}&accuracy=${accuracy}&avgPerfectSpeed=${avgPerfect}&correctedCount=${state.results.corrected.length}&avgCorrectedSpeed=${avgCorrected}`, { mode: 'no-cors' });
+      state.mode = 'end';
+      render();
+    }
+
+    window.onkeydown = (e) => {
+      if (state.mode === 'play' && e.target.tagName !== 'INPUT') {
+        if ((e.key >= '0' && e.key <= '9') || e.key === '-' || e.key === '/') pressKey(e.key);
+        if (e.key === 'Backspace') { e.preventDefault(); pressKey('back'); }
+      }
+    };
+    render();
+  </script>
+</body>
+</html>
