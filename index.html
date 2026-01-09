@@ -3,30 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>正負數練習 - 競速版 V2</title>
+  <title>正負數練習系統 - 穩定修復版</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    .mode-card-selected { border-color: #4f46e5 !important; background-color: #f5f3ff !important; transform: translateY(-4px); }
-    input:focus { outline: none; border-color: #4f46e5 !important; }
-    .correct-flash { animation: flash 0.4s ease-out; }
-    @keyframes flash { 0% { background-color: transparent; } 50% { background-color: #dcfce7; } 100% { background-color: transparent; } }
-    
-    .key-btn {
-      display: flex; align-items: center; justify-content: center;
-      background-color: white; border: 1px solid #e5e7eb;
-      border-radius: 0.75rem; font-size: 1.5rem; font-weight: bold;
-      height: 60px; transition: all 0.05s; cursor: pointer; user-select: none;
-    }
+    .key-btn { display: flex; align-items: center; justify-content: center; background-color: white; border: 1px solid #e5e7eb; border-radius: 0.75rem; font-size: 1.5rem; font-weight: bold; height: 60px; transition: all 0.05s; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
     .key-btn:active { background-color: #e0e7ff; transform: scale(0.92); }
     .key-btn-op { background-color: #f9fafb; color: #4f46e5; border-color: #c7d2fe; }
     .key-btn-back { background-color: #fee2e2; color: #ef4444; height: 100%; min-height: 260px; }
+    .correct-flash { animation: flash 0.4s ease-out; }
+    @keyframes flash { 0% { background-color: transparent; } 50% { background-color: #dcfce7; } 100% { background-color: transparent; } }
   </style>
 </head>
 <body class="bg-gray-100 overflow-x-hidden">
   <div id="app"></div>
 
   <script>
-    // 請確保這裡填入您的 SCRIPT_URL
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5SPY0XNjPWaRAgSmSZx1cSgTTeuACaT17Lx96Oy0TkALO0mgOKA-mr3KuUtFCNVir2Q/exec';
     
     let state = {
@@ -45,26 +36,27 @@
         app.innerHTML = `
           <div class="min-h-screen flex items-center justify-center p-4">
             <div class="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full">
-              <h1 class="text-2xl font-bold text-center mb-6">正負數練習系統</h1>
-              <input type="text" id="nameInput" class="w-full px-4 py-3 border-2 rounded-xl mb-4" placeholder="請輸入姓名" value="${state.name}">
+              <h1 class="text-2xl font-bold text-center mb-2">正負數練習系統</h1>
+              <p class="text-xs text-red-500 text-center mb-6">若使用 LINE 開啟無法輸入，請點選右上角「以瀏覽器開啟」</p>
+              <input type="text" id="nameInput" class="w-full px-4 py-3 border-2 rounded-xl mb-4 focus:border-indigo-500 outline-none" placeholder="請輸入姓名" value="${state.name}">
               <button onclick="handleStart()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700">下一步</button>
             </div>
           </div>`;
-        const input = document.getElementById('nameInput');
-        input.focus();
-        input.oninput = (e) => state.name = e.target.value;
-        input.onkeydown = (e) => e.key === 'Enter' && handleStart();
+        const ni = document.getElementById('nameInput');
+        ni.oninput = (e) => state.name = e.target.value;
+        // 名字輸入框的 Enter 邏輯
+        ni.onkeydown = (e) => { if(e.key === 'Enter') handleStart(); };
       } 
       else if (state.mode === 'select') {
         app.innerHTML = `
           <div class="min-h-screen flex flex-col items-center justify-center p-4">
             <h2 class="text-xl font-bold mb-6 text-gray-700">選擇練習模式</h2>
             <div class="grid grid-cols-2 gap-4 w-full max-w-[320px]">
-              <div onclick="startPractice('timed')" class="p-6 bg-white border-2 border-indigo-100 rounded-2xl cursor-pointer text-center hover:bg-indigo-50 transition">
+              <div onclick="startPractice('timed')" class="p-6 bg-white border-2 border-indigo-100 rounded-2xl cursor-pointer text-center">
                 <div class="font-bold text-lg">計時模式</div>
                 <div class="text-gray-400 text-sm">120 秒</div>
               </div>
-              <div onclick="startPractice('count')" class="p-6 bg-white border-2 border-indigo-100 rounded-2xl cursor-pointer text-center hover:bg-indigo-50 transition">
+              <div onclick="startPractice('count')" class="p-6 bg-white border-2 border-indigo-100 rounded-2xl cursor-pointer text-center">
                 <div class="font-bold text-lg">題數模式</div>
                 <div class="text-gray-400 text-sm">120 題</div>
               </div>
@@ -80,33 +72,21 @@
                 ${state.practiceType === 'timed' ? state.timeLeft + 's' : '進度: ' + state.stats.correct}
               </div>
             </div>
-            
             <div class="text-center mb-6">
               <div class="text-6xl font-bold mb-6 text-gray-800">${state.problem.display} = ?</div>
               <input type="text" readonly class="text-5xl border-b-4 ${state.isAnswerCorrect ? 'border-green-500 text-green-500' : 'border-gray-300'} w-48 text-center bg-transparent outline-none mb-8" value="${state.userAns}">
             </div>
-
             <div class="flex gap-2 w-full max-w-[320px]">
               <div class="flex-grow flex flex-col gap-2">
                 <div class="grid grid-cols-3 gap-2">
-                  <div onclick="pressKey('7')" class="key-btn">7</div>
-                  <div onclick="pressKey('8')" class="key-btn">8</div>
-                  <div onclick="pressKey('9')" class="key-btn">9</div>
-                  <div onclick="pressKey('4')" class="key-btn">4</div>
-                  <div onclick="pressKey('5')" class="key-btn">5</div>
-                  <div onclick="pressKey('6')" class="key-btn">6</div>
-                  <div onclick="pressKey('1')" class="key-btn">1</div>
-                  <div onclick="pressKey('2')" class="key-btn">2</div>
-                  <div onclick="pressKey('3')" class="key-btn">3</div>
+                  ${[7,8,9,4,5,6,1,2,3].map(n => `<div onclick="pressKey('${n}')" class="key-btn">${n}</div>`).join('')}
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                   <div onclick="pressKey('0')" class="key-btn key-btn-op">0</div>
                   <div onclick="pressKey('-')" class="key-btn key-btn-op font-black text-2xl">-</div>
                 </div>
               </div>
-              <div class="w-16">
-                <div onclick="pressKey('back')" class="key-btn key-btn-back text-2xl">⌫</div>
-              </div>
+              <div class="w-16"><div onclick="pressKey('back')" class="key-btn key-btn-back text-2xl">⌫</div></div>
             </div>
           </div>`;
       }
@@ -118,25 +98,29 @@
             <div class="bg-white p-8 rounded-2xl shadow-xl text-center w-full max-w-sm">
               <h2 class="text-2xl font-bold mb-4">結果分析</h2>
               <div class="space-y-2 text-left mb-6">
-                <p class="flex justify-between"><span>答對題數:</span> <span class="font-bold">${state.stats.correct}</span></p>
-                <p class="flex justify-between"><span>答對率:</span> <span class="font-bold">${accuracy}%</span></p>
-                <p class="flex justify-between"><span>平均速度:</span> <span class="font-bold">${avgSpeed}s</span></p>
-                <p class="flex justify-between"><span>使用退格題數:</span> <span class="font-bold">${state.totalBackspacesProblems}</span></p>
+                <p class="flex justify-between"><span>答對題數:</span> <span>${state.stats.correct}</span></p>
+                <p class="flex justify-between"><span>答對率:</span> <span>${accuracy}%</span></p>
+                <p class="flex justify-between"><span>平均速度:</span> <span>${avgSpeed}s</span></p>
+                <p class="flex justify-between"><span>修改題數:</span> <span>${state.totalBackspacesProblems}</span></p>
               </div>
-              <button onclick="location.reload()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">再試一次</button>
+              <button onclick="location.reload()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">再練一次</button>
             </div>
           </div>`;
       }
     }
 
-    // --- 邏輯部分保持不變 ---
+    function handleStart() {
+      if (state.name.trim()) { state.mode = 'select'; render(); }
+      else { alert('請輸入姓名'); }
+    }
+
     function startPractice(type) {
       state.practiceType = type; state.mode = 'play';
       state.stats = { correct: 0, total: 0 }; state.allTimes = []; state.totalBackspacesProblems = 0;
       nextProblem();
       if (type === 'timed') {
         state.timeLeft = 120;
-        timer = setInterval(() => { state.timeLeft--; if (state.timeLeft <= 0) endGame(); else render(); }, 1000);
+        timer = setInterval(() => { state.timeLeft--; if (state.timeLeft <= 0) endGame(); else { const tb = document.getElementById('timer-box'); if(tb) tb.innerText = state.timeLeft + 's'; } }, 1000);
       }
     }
 
@@ -165,14 +149,8 @@
       state.stats.correct++; state.stats.total++;
       if (state.backspaceCount > 0) state.totalBackspacesProblems++;
       render();
-      
-      const accuracy = ((state.stats.correct / state.stats.total) * 100).toFixed(1);
       fetch(`${SCRIPT_URL}?action=save&studentName=${state.name}&problem=${state.problem.display}&correctAnswer=${state.problem.answer}&userAnswer=${state.userAns}&isCorrect=true&timeSpent=${timeSpent}`, { mode: 'no-cors' });
-
-      setTimeout(() => {
-        if (state.practiceType === 'count' && state.stats.correct >= state.target) endGame();
-        else nextProblem();
-      }, 500);
+      setTimeout(() => { if (state.practiceType === 'count' && state.stats.correct >= state.target) endGame(); else nextProblem(); }, 500);
     }
 
     function endGame() {
@@ -184,13 +162,15 @@
       render();
     }
 
-    function handleStart() { if (state.name.trim()) { state.mode = 'select'; render(); } else { alert('請輸入姓名'); } }
-    
+    // 關鍵修正：全域按鍵攔截僅在 Play 模式且沒在輸入文字時生效
     window.onkeydown = (e) => {
-      if (state.mode === 'play') {
+      if (state.mode === 'play' && e.target.tagName !== 'INPUT') {
         if (e.key >= '0' && e.key <= '9') pressKey(e.key);
         if (e.key === '-') pressKey('-');
-        if (e.key === 'Backspace') pressKey('back');
+        if (e.key === 'Backspace') { 
+          e.preventDefault(); // 防止網頁倒退
+          pressKey('back'); 
+        }
       }
     };
 
