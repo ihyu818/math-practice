@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>有理數指數練習 - 多底數版</title>
+  <title>有理數指數練習 - 精確紀錄版</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     .key-btn { display: flex; align-items: center; justify-content: center; background-color: white; border: 1px solid #e5e7eb; border-radius: 0.75rem; font-size: 1.5rem; font-weight: bold; height: 60px; transition: all 0.05s; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
@@ -19,7 +19,6 @@
   <div id="app"></div>
 
   <script>
-    // --- 請確保填入您的 GAS 部署網址 ---
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5SPY0XNjPWaRAgSmSZx1cSgTTeuACaT17Lx96Oy0TkALO0mgOKA-mr3KuUtFCNVir2Q/exec'; 
     
     let state = {
@@ -38,12 +37,12 @@
       
       if (state.mode === 'login') {
         app.innerHTML = `
-          <div class="min-h-screen flex items-center justify-center p-4">
-            <div class="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full text-center">
-              <h1 class="text-2xl font-bold mb-2">有理數指數練習</h1>
-              <p class="text-sm text-gray-500 mb-6 font-bold tracking-tight text-indigo-600">目標：將題目化為 a<sup>?</sup> 的形式</p>
-              <input type="text" id="nameInput" class="w-full px-4 py-3 border-2 rounded-xl mb-4 outline-none focus:border-indigo-500" placeholder="請輸入姓名" value="${state.name}">
-              <button onclick="handleStart()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 active:scale-95 transition-all">進入練習</button>
+          <div class="min-h-screen flex items-center justify-center p-4 text-slate-800">
+            <div class="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full text-center border-t-8 border-indigo-600">
+              <h1 class="text-2xl font-black mb-2 uppercase tracking-tight">Exponent Lab</h1>
+              <p class="text-sm text-gray-500 mb-6 font-bold">目標：將題目化為 a<sup>?</sup> 的形式</p>
+              <input type="text" id="nameInput" class="w-full px-4 py-3 border-2 rounded-xl mb-4 outline-none focus:border-indigo-500 transition-all" placeholder="請輸入姓名" value="${state.name}">
+              <button onclick="handleStart()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 active:scale-95 transition-all shadow-lg shadow-indigo-100">進入練習</button>
               <button onclick="location.href='index.html'" class="w-full mt-4 text-gray-400 text-sm italic hover:underline">返回主選單</button>
             </div>
           </div>`;
@@ -53,7 +52,7 @@
       else if (state.mode === 'select') {
         app.innerHTML = `
           <div class="min-h-screen flex flex-col items-center justify-center p-4">
-            <h2 class="text-xl font-bold mb-6 text-gray-700">選擇練習模式</h2>
+            <h2 class="text-xl font-bold mb-6 text-gray-700 italic">Select Mode</h2>
             <div class="grid grid-cols-2 gap-4 w-full max-w-[320px]">
               <div onclick="startPractice('timed')" class="p-6 bg-white border-2 border-indigo-100 rounded-2xl cursor-pointer text-center font-bold hover:bg-indigo-50 active:scale-95 transition-all">計時模式 (120s)</div>
               <div onclick="startPractice('count')" class="p-6 bg-white border-2 border-indigo-100 rounded-2xl cursor-pointer text-center font-bold hover:bg-indigo-50 active:scale-95 transition-all">題數模式 (20題)</div>
@@ -72,25 +71,25 @@
 
             <div class="text-center mb-10 h-32 flex items-center justify-center">
               <div class="text-5xl font-bold text-gray-800 tracking-wider">${state.problem.html}</div>
-              <div class="text-4xl mx-4 text-indigo-500">= ${state.problem.base}<sup>?</sup></div>
+              <div class="text-4xl mx-4 text-indigo-500 font-black">= ${state.problem.base}<sup>?</sup></div>
             </div>
 
             <div class="mb-8">
-              <input type="text" readonly class="text-5xl border-b-4 ${state.isAnswerCorrect ? 'border-green-500 text-green-500' : 'border-gray-300'} w-64 text-center bg-transparent outline-none" value="${state.userAns}">
+              <input type="text" readonly class="text-5xl border-b-4 ${state.isAnswerCorrect ? 'border-green-500 text-green-500' : 'border-gray-300'} w-64 text-center bg-transparent outline-none font-bold" value="${state.userAns}">
             </div>
 
             <div class="flex gap-2 w-full max-w-[340px]">
               <div class="flex-grow flex flex-col gap-2">
                 <div class="grid grid-cols-3 gap-2">
-                  ${[7,8,9,4,5,6,1,2,3].map(n => `<div onclick="pressKey('${n}')" class="key-btn">${n}</div>`).join('')}
+                  ${[7,8,9,4,5,6,1,2,3].map(n => `<div onclick="pressKey('${n}')" class="key-btn shadow-sm text-slate-700">${n}</div>`).join('')}
                 </div>
                 <div class="grid grid-cols-3 gap-2">
-                  <div onclick="pressKey('0')" class="key-btn key-btn-op">0</div>
-                  <div onclick="pressKey('-')" class="key-btn key-btn-op font-black text-2xl">-</div>
-                  <div onclick="pressKey('/')" class="key-btn key-btn-op font-black text-2xl">/</div>
+                  <div onclick="pressKey('0')" class="key-btn key-btn-op shadow-sm">0</div>
+                  <div onclick="pressKey('-')" class="key-btn key-btn-op font-black text-2xl shadow-sm">-</div>
+                  <div onclick="pressKey('/')" class="key-btn key-btn-op font-black text-2xl shadow-sm">/</div>
                 </div>
               </div>
-              <div class="w-16"><div onclick="pressKey('back')" class="key-btn key-btn-back text-2xl">⌫</div></div>
+              <div class="w-16"><div onclick="pressKey('back')" class="key-btn key-btn-back text-2xl shadow-sm">⌫</div></div>
             </div>
           </div>`;
       }
@@ -99,16 +98,16 @@
         const accuracy = total > 0 ? ((state.results.perfect.length / total) * 100).toFixed(1) : 0;
         app.innerHTML = `
           <div class="min-h-screen flex items-center justify-center p-4">
-            <div class="bg-white p-8 rounded-2xl shadow-xl text-center w-full max-w-sm">
-              <h2 class="text-2xl font-bold mb-4 text-emerald-600 italic tracking-widest">FINISHED</h2>
-              <div class="text-left space-y-2 mb-6 border-y py-4 text-sm font-medium">
+            <div class="bg-white p-8 rounded-2xl shadow-xl text-center w-full max-w-sm border-b-8 border-emerald-500">
+              <h2 class="text-2xl font-black mb-4 text-emerald-600 tracking-widest uppercase">Result</h2>
+              <div class="text-left space-y-2 mb-6 border-y py-4 text-sm font-bold text-slate-600">
                 <p class="flex justify-between"><span>總作答數:</span> <span>${total}</span></p>
-                <p class="flex justify-between text-green-600"><span>一次到位:</span> <span>${state.results.perfect.length}</span></p>
+                <p class="flex justify-between text-green-600"><span>完美答對:</span> <span>${state.results.perfect.length}</span></p>
                 <p class="flex justify-between text-indigo-600"><span>正確率:</span> <span>${accuracy}%</span></p>
                 <p class="flex justify-between text-orange-500"><span>修正次數:</span> <span>${state.results.corrected.length}</span></p>
               </div>
-              <button onclick="location.reload()" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold mb-3 shadow-lg shadow-emerald-100">再挑戰一次</button>
-              <button onclick="location.href='index.html'" class="w-full bg-gray-100 text-gray-500 py-3 rounded-xl font-bold tracking-widest uppercase">Select Lesson</button>
+              <button onclick="location.reload()" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold mb-3 shadow-lg shadow-emerald-100 hover:bg-emerald-700 active:scale-95 transition-all">再練習一次</button>
+              <button onclick="location.href='index.html'" class="w-full bg-gray-100 text-gray-500 py-3 rounded-xl font-bold tracking-widest uppercase hover:bg-gray-200 active:scale-95 transition-all">Back to Menu</button>
             </div>
           </div>`;
       }
@@ -131,43 +130,47 @@
       }
     }
 
+    function gcd(x, y) { return y === 0 ? x : gcd(y, x % y); }
+
     function nextProblem() {
       let base, a, b;
       let isValid = false;
 
-      // 迴圈直到符合 a^n <= 1300 的限制 (此處 a 是底數, n 是分子)
       while (!isValid) {
-        base = Math.floor(Math.random() * 8) + 2; // 底數 2-9
-        a = Math.floor(Math.random() * 10) + 1;    // 分子 1-10
-        b = Math.floor(Math.random() * 8) + 2;    // 分母 2-9
-        
-        if (Math.pow(base, a) <= 1300) {
-          isValid = true;
-        }
+        base = Math.floor(Math.random() * 8) + 2; 
+        a = Math.floor(Math.random() * 10) + 1;    
+        b = Math.floor(Math.random() * 8) + 2;    
+        if (Math.pow(base, a) <= 1300) isValid = true;
       }
 
       const type = Math.floor(Math.random() * 3); 
       let html = "";
-      let targetVal = 0;
-      let rawTextProblem = "";
+      let targetNumeric = 0;
+      let targetString = "";
 
-      if (type === 0) { // 根式 √[b](base^a)
-        targetVal = a / b;
-        rawTextProblem = `${base}^(${a}/${b})`;
+      // 精簡分數邏輯用於「紀錄字串」
+      const common = gcd(a, b);
+      const sa = a / common;
+      const sb = b / common;
+      const simpleFract = sb === 1 ? `${sa}` : `${sa}/${sb}`;
+
+      if (type === 0) { // 根式
+        targetNumeric = a / b;
+        targetString = simpleFract;
         html = `<div class="inline-block relative math-font text-5xl pt-2">
                   <span class="text-xl absolute -top-1 -left-4 font-bold italic">${b === 2 ? '' : b}</span>
                   <span>√</span><span class="border-t-4 border-black px-1">${base}<sup>${a === 1 ? '' : a}</sup></span>
                 </div>`;
-      } else if (type === 1) { // 分式 1/base^a
-        targetVal = -a;
-        rawTextProblem = `${base}^(-${a})`;
+      } else if (type === 1) { // 分式
+        targetNumeric = -a;
+        targetString = `-${a}`;
         html = `<div class="inline-flex flex-col items-center math-font text-5xl">
                   <div class="border-b-2 border-black px-4 leading-none pb-1">1</div>
                   <div class="leading-none pt-2">${base}<sup>${a}</sup></div>
                 </div>`;
-      } else { // 綜合 1/√[b](base^a)
-        targetVal = -(a / b);
-        rawTextProblem = `${base}^(-${a}/${b})`;
+      } else { // 綜合
+        targetNumeric = -(a / b);
+        targetString = sb === 1 ? `-${sa}` : `-${sa}/${sb}`;
         html = `<div class="inline-flex flex-col items-center math-font text-4xl">
                   <div class="border-b-2 border-black px-4 leading-none pb-1">1</div>
                   <div class="relative pt-4">
@@ -177,7 +180,7 @@
                 </div>`;
       }
 
-      state.problem = { target: targetVal, html: html, raw: rawTextProblem, start: Date.now(), base: base };
+      state.problem = { targetNum: targetNumeric, targetStr: targetString, html: html, start: Date.now(), base: base };
       state.userAns = ''; state.isAnswerCorrect = false; state.currentBackspaces = 0; state.currentKeyLog = [];
       render();
     }
@@ -203,7 +206,7 @@
           } else {
             userVal = parseFloat(state.userAns);
           }
-          if (!isNaN(userVal) && Math.abs(userVal - state.problem.target) < 0.0001) {
+          if (!isNaN(userVal) && Math.abs(userVal - state.problem.targetNum) < 0.0001) {
             handleCorrect();
           }
         } catch(e) {}
@@ -218,7 +221,10 @@
       if (usedBack) state.results.corrected.push(timeSpent);
       else state.results.perfect.push(timeSpent);
       render();
-      fetch(`${SCRIPT_URL}?action=save&type=Exp&studentName=${encodeURIComponent(state.name)}&problem=${encodeURIComponent(state.problem.raw)}&correctAnswer=${state.problem.target.toFixed(4)}&userAnswer=${encodeURIComponent(state.userAns)}&isCorrect=true&timeSpent=${timeSpent}&usedBack=${usedBack}&keyLog=${encodeURIComponent(keyLogStr)}`, { mode: 'no-cors' });
+      
+      // 注意：這裡 correctAnswer 改傳送 state.problem.targetStr
+      fetch(`${SCRIPT_URL}?action=save&type=Exp&studentName=${encodeURIComponent(state.name)}&problem=${encodeURIComponent(state.problem.base + '^?')}&correctAnswer=${encodeURIComponent(state.problem.targetStr)}&userAnswer=${encodeURIComponent(state.userAns)}&isCorrect=true&timeSpent=${timeSpent}&usedBack=${usedBack}&keyLog=${encodeURIComponent(keyLogStr)}`, { mode: 'no-cors' });
+
       setTimeout(() => { if (state.practiceType === 'count' && state.results.perfect.length >= state.target) endGame(); else nextProblem(); }, 600);
     }
 
