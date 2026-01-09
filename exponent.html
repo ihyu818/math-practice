@@ -43,7 +43,7 @@
               <p class="text-sm text-gray-500 mb-6 font-bold tracking-tight">目標：將題目化為 2<sup>?</sup> 並輸入該指數</p>
               <input type="text" id="nameInput" class="w-full px-4 py-3 border-2 rounded-xl mb-4 outline-none focus:border-indigo-500" placeholder="請輸入姓名" value="${state.name}">
               <button onclick="handleStart()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">進入練習</button>
-              <button onclick="location.href='index.html'" class="w-full mt-4 text-gray-400 text-sm">返回選單</button>
+              <button onclick="location.href='index.html'" class="w-full mt-4 text-gray-400 text-sm italic">返回選單</button>
             </div>
           </div>`;
         document.getElementById('nameInput').oninput = (e) => state.name = e.target.value;
@@ -62,7 +62,7 @@
         app.innerHTML = `
           <div class="min-h-screen p-4 flex flex-col items-center ${state.isAnswerCorrect ? 'correct-flash' : ''}">
             <div class="w-full max-w-xl flex justify-between bg-white p-4 rounded-xl shadow mb-8">
-              <span class="font-bold text-gray-600">${state.name}</span>
+              <span class="font-bold text-gray-600 tracking-tight">${state.name}</span>
               <div id="timer-box" class="text-indigo-600 font-mono font-bold text-xl">
                 ${state.practiceType === 'timed' ? state.timeLeft + 's' : '答對: ' + state.results.perfect.length}
               </div>
@@ -98,132 +98,7 @@
         app.innerHTML = `
           <div class="min-h-screen flex items-center justify-center p-4">
             <div class="bg-white p-8 rounded-2xl shadow-xl text-center w-full max-w-sm">
-              <h2 class="text-2xl font-bold mb-4 text-emerald-600">指數練習完成</h2>
-              <div class="text-left space-y-2 mb-6 border-y py-4 text-sm">
+              <h2 class="text-2xl font-bold mb-4 text-emerald-600 italic">DONE!</h2>
+              <div class="text-left space-y-2 mb-6 border-y py-4 text-sm font-medium">
                 <p class="flex justify-between"><span>總作答數:</span> <span>${total}</span></p>
-                <p class="flex justify-between text-green-600 font-bold"><span>一次答對:</span> <span>${state.results.perfect.length}</span></p>
-                <p class="flex justify-between text-green-600 font-bold"><span>答對率:</span> <span>${accuracy}%</span></p>
-                <p class="flex justify-between text-red-500"><span>修正次數:</span> <span>${state.results.corrected.length}</span></p>
-              </div>
-              <button onclick="location.reload()" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold mb-3">再練一次</button>
-              <button onclick="location.href='index.html'" class="w-full bg-gray-100 text-gray-600 py-3 rounded-xl font-bold">回選單</button>
-            </div>
-          </div>`;
-      }
-    }
-
-    function handleStart() { if (state.name.trim()) { state.mode = 'select'; render(); } else { alert('請輸入姓名'); } }
-
-    function startPractice(type) {
-      state.practiceType = type; state.mode = 'play';
-      state.results = { perfect: [], corrected: [] };
-      state.target = 20;
-      nextProblem();
-      if (type === 'timed') {
-        state.timeLeft = 120;
-        timer = setInterval(() => { 
-          state.timeLeft--; 
-          if (state.timeLeft <= 0) endGame(); 
-          else { const tb = document.getElementById('timer-box'); if(tb) tb.innerText = state.timeLeft + 's'; } 
-        }, 1000);
-      }
-    }
-
-    function gcd(x, y) { return y === 0 ? x : gcd(y, x % y); }
-    function simplifyFraction(a, b) {
-      const common = Math.abs(gcd(a, b));
-      return [a / common, b / common];
-    }
-
-    function nextProblem() {
-      let a = Math.floor(Math.random() * 9) + 2; // 指數(分子) 2-10
-      let b = Math.floor(Math.random() * 8) + 2; // 根次(分母) 2-9
-      const type = Math.floor(Math.random() * 3); 
-      let html = "";
-      let answerStr = "";
-      let rawTextProblem = "";
-
-      if (type === 0) { // 根式
-        let [sa, sb] = simplifyFraction(a, b);
-        answerStr = sb === 1 ? `${sa}` : `${sa}/${sb}`;
-        rawTextProblem = `root(${b}, 2^${a})`;
-        html = `<div class="inline-block relative math-font text-5xl pt-2">
-                  <span class="text-xl absolute -top-1 -left-4 font-bold italic">${b}</span>
-                  <span>√</span><span class="border-t-4 border-black px-1">2<sup>${a}</sup></span>
-                </div>`;
-      } else if (type === 1) { // 分式 1 / 2^a
-        answerStr = `-${a}`;
-        rawTextProblem = `1 / 2^${a}`;
-        html = `<div class="inline-flex flex-col items-center math-font text-5xl">
-                  <div class="border-b-2 border-black px-4 leading-none pb-1">1</div>
-                  <div class="leading-none pt-2">2<sup>${a}</sup></div>
-                </div>`;
-      } else { // 綜合 1 / root(b, 2^a)
-        let [sa, sb] = simplifyFraction(a, b);
-        answerStr = sb === 1 ? `-${sa}` : `-${sa}/${sb}`;
-        rawTextProblem = `1 / root(${b}, 2^${a})`;
-        html = `<div class="inline-flex flex-col items-center math-font text-4xl">
-                  <div class="border-b-2 border-black px-4 leading-none pb-1">1</div>
-                  <div class="relative pt-4">
-                    <span class="text-sm absolute top-1 -left-3 font-bold italic">${b}</span>
-                    <span>√</span><span class="border-t-2 border-black px-1">2<sup>${a}</sup></span>
-                  </div>
-                </div>`;
-      }
-
-      state.problem = { answer: answerStr, html: html, raw: rawTextProblem, start: Date.now() };
-      state.userAns = ''; state.isAnswerCorrect = false; state.currentBackspaces = 0; state.currentKeyLog = [];
-      render();
-    }
-
-    function pressKey(key) {
-      if (state.isAnswerCorrect) return;
-      state.currentKeyLog.push(key === 'back' ? '⌫' : key);
-      if (key === 'back') { state.userAns = state.userAns.slice(0, -1); state.currentBackspaces++; }
-      else { if (state.userAns.length < 8) state.userAns += key; }
-      render();
-      if (state.userAns === state.problem.answer) handleCorrect();
-    }
-
-    function handleCorrect() {
-      state.isAnswerCorrect = true;
-      const timeSpent = (Date.now() - state.problem.start) / 1000;
-      const usedBack = state.currentBackspaces > 0;
-      const keyLogStr = state.currentKeyLog.join('>');
-      
-      if (usedBack) state.results.corrected.push(timeSpent);
-      else state.results.perfect.push(timeSpent);
-      
-      render();
-      
-      // 傳送時帶上 type=Exp 讓試算表分流
-      fetch(`${SCRIPT_URL}?action=save&type=Exp&studentName=${encodeURIComponent(state.name)}&problem=${encodeURIComponent(state.problem.raw)}&correctAnswer=${encodeURIComponent(state.problem.answer)}&userAnswer=${encodeURIComponent(state.userAns)}&isCorrect=true&timeSpent=${timeSpent}&usedBack=${usedBack}&keyLog=${encodeURIComponent(keyLogStr)}`, { mode: 'no-cors' });
-
-      setTimeout(() => { 
-        if (state.practiceType === 'count' && state.results.perfect.length >= state.target) endGame(); 
-        else nextProblem(); 
-      }, 600);
-    }
-
-    function endGame() {
-      clearInterval(timer);
-      const total = state.results.perfect.length + state.results.corrected.length;
-      const accuracy = total > 0 ? ((state.results.perfect.length / total) * 100).toFixed(1) : 0;
-      const avgPerfect = state.results.perfect.length > 0 ? (state.results.perfect.reduce((a,b)=>a+b, 0) / state.results.perfect.length).toFixed(2) : 0;
-      const avgCorrected = state.results.corrected.length > 0 ? (state.results.corrected.reduce((a,b)=>a+b, 0) / state.results.corrected.length).toFixed(2) : 0;
-
-      fetch(`${SCRIPT_URL}?action=saveSummary&type=Exp&studentName=${encodeURIComponent(state.name)}&practiceType=Exponent&totalCount=${total}&perfectCount=${state.results.perfect.length}&accuracy=${accuracy}&avgPerfectSpeed=${avgPerfect}&correctedCount=${state.results.corrected.length}&avgCorrectedSpeed=${avgCorrected}`, { mode: 'no-cors' });
-      state.mode = 'end';
-      render();
-    }
-
-    window.onkeydown = (e) => {
-      if (state.mode === 'play' && e.target.tagName !== 'INPUT') {
-        if ((e.key >= '0' && e.key <= '9') || e.key === '-' || e.key === '/') pressKey(e.key);
-        if (e.key === 'Backspace') { e.preventDefault(); pressKey('back'); }
-      }
-    };
-    render();
-  </script>
-</body>
-</html>
+                <p class="flex justify-between text-green-600"><span>一次到位:</span> <span>${state.results.perfect.length
