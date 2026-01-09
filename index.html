@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>數學練習系統 - 選單</title>
+  <title>數學自主練習系統</title>
+  <meta property="og:title" content="數學自主練習系統 - 選單首頁">
+  <meta property="og:description" content="包含正負數加減與有理數指數練習，即時回饋與歷程紀錄。">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     .menu-card {
@@ -16,35 +18,36 @@
     }
   </style>
 </head>
-<body class="bg-slate-50 min-h-screen flex items-center justify-center p-6">
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-6 text-slate-800 font-sans">
   <div class="max-w-2xl w-full">
     <header class="text-center mb-12">
-      <h1 class="text-4xl font-extrabold text-slate-800 mb-2">數學自主練習系統</h1>
-      <p class="text-slate-500 font-medium">請選擇今日要挑戰的練習單元</p>
+      <h1 class="text-4xl font-black mb-3 tracking-tight">數學自主練習系統</h1>
+      <p class="text-slate-500 font-bold uppercase tracking-widest text-sm">Math Practice Lab</p>
     </header>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
       <div onclick="location.href='add_sub.html'" class="menu-card bg-white p-8 rounded-3xl shadow-md border-b-8 border-indigo-500 flex flex-col items-center">
-        <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-6">
-          <span class="text-3xl font-bold">±</span>
+        <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-inner">
+          <span class="text-3xl font-black">±</span>
         </div>
-        <h2 class="text-2xl font-bold text-slate-800 mb-2">正負數加減</h2>
-        <p class="text-slate-400 text-center text-sm mb-6">包含性質符號、去括號法則與競速計算練習。</p>
-        <span class="bg-indigo-600 text-white px-6 py-2 rounded-full font-bold text-sm tracking-wide">開始練習</span>
+        <h2 class="text-2xl font-bold mb-2">正負數加減</h2>
+        <p class="text-slate-400 text-center text-sm mb-6 leading-relaxed">包含性質符號、去括號法則與整數四則運算競速練習。</p>
+        <span class="bg-indigo-600 text-white px-8 py-2 rounded-full font-black text-sm tracking-widest shadow-lg shadow-indigo-100 uppercase">Start</span>
       </div>
 
       <div onclick="location.href='exponent.html'" class="menu-card bg-white p-8 rounded-3xl shadow-md border-b-8 border-emerald-500 flex flex-col items-center">
-        <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6">
-          <span class="text-3xl font-bold">2<sup>x</sup></span>
+        <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-6 shadow-inner">
+          <span class="text-3xl font-black italic">a<sup>x</sup></span>
         </div>
-        <h2 class="text-2xl font-bold text-slate-800 mb-2">有理數指數</h2>
-        <p class="text-slate-400 text-center text-sm mb-6">根式與分式的轉換，練習將數值化為 2 的指數次方。</p>
-        <span class="bg-emerald-600 text-white px-6 py-2 rounded-full font-bold text-sm tracking-wide">開始練習</span>
+        <h2 class="text-2xl font-bold mb-2">有理數指數</h2>
+        <p class="text-slate-400 text-center text-sm mb-6 leading-relaxed">練習將根式與分式數值，轉化為指定底數的指數形式。</p>
+        <span class="bg-emerald-600 text-white px-8 py-2 rounded-full font-black text-sm tracking-widest shadow-lg shadow-emerald-100 uppercase">Start</span>
       </div>
     </div>
 
-    <footer class="mt-16 text-center text-slate-400 text-xs">
-      <p>建議使用 Chrome 或 Safari 瀏覽器以獲得最佳體驗</p>
+    <footer class="mt-16 text-center text-slate-400 text-xs font-medium">
+      <p>建議使用最新版瀏覽器以獲得最佳互動體驗</p>
+      <p class="mt-1 tracking-tighter opacity-50 uppercase">V2.1 - Enhanced Educational Version</p>
     </footer>
   </div>
 </body>
