@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>數學練習系統 - 選單</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .menu-card {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+    .menu-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+    }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-6">
+  <div class="max-w-2xl w-full">
+    <header class="text-center mb-12">
+      <h1 class="text-4xl font-extrabold text-slate-800 mb-2">數學自主練習系統</h1>
+      <p class="text-slate-500 font-medium">請選擇今日要挑戰的練習單元</p>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div onclick="location.href='add_sub.html'" class="menu-card bg-white p-8 rounded-3xl shadow-md border-b-8 border-indigo-500 flex flex-col items-center">
+        <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-6">
+          <span class="text-3xl font-bold">±</span>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-800 mb-2">正負數加減</h2>
+        <p class="text-slate-400 text-center text-sm mb-6">包含性質符號、去括號法則與競速計算練習。</p>
+        <span class="bg-indigo-600 text-white px-6 py-2 rounded-full font-bold text-sm tracking-wide">開始練習</span>
+      </div>
+
+      <div onclick="location.href='exponent.html'" class="menu-card bg-white p-8 rounded-3xl shadow-md border-b-8 border-emerald-500 flex flex-col items-center">
+        <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6">
+          <span class="text-3xl font-bold">2<sup>x</sup></span>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-800 mb-2">有理數指數</h2>
+        <p class="text-slate-400 text-center text-sm mb-6">根式與分式的轉換，練習將數值化為 2 的指數次方。</p>
+        <span class="bg-emerald-600 text-white px-6 py-2 rounded-full font-bold text-sm tracking-wide">開始練習</span>
+      </div>
+    </div>
+
+    <footer class="mt-16 text-center text-slate-400 text-xs">
+      <p>建議使用 Chrome 或 Safari 瀏覽器以獲得最佳體驗</p>
+    </footer>
+  </div>
+</body>
+</html>
