@@ -196,12 +196,13 @@ function handleCorrect() {
     if (state.combo > (state.maxCombo || 0)) state.maxCombo = state.combo;
   }
   
-  // 新計分規則
+  // 新計分規則：k是連擊數
   const k = state.combo;
-  const bonusA = k > 0 ? 0.1 * (k - 1) : 0;
+  const bonusA = k > 0 ? 0.1 * (k - 1) : 0; // 線性加成
+  // 三倍數爆發：每3題多加 0.01 * 2^(k/3 - 1)
   const bonusB = (k > 0 && k % 3 === 0) ? (0.01 * Math.pow(2, (k / 3) - 1)) : 0;
   const earn = 1 + bonusA + bonusB;
-  
+
   state.score += earn;
   state.lastEarned = earn;
 
