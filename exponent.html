@@ -184,18 +184,40 @@
         } catch(e) {}
       }
     }
-    function handleCorrect() {
-      state.isAnswerCorrect = true;
-      const ts = (Date.now() - state.problem.start) / 1000;
-      const ub = state.currentBackspaces > 0;
-      if (ub) state.combo = 0; else { state.combo++; if (state.combo > state.maxCombo) state.maxCombo = state.combo; }
-      const earn = 1 + (state.combo > 0 ? 0.1 * Math.pow(2, state.combo - 1) : 0);
-      state.score += earn; state.lastEarned = earn;
-      if (ub) state.results.corrected.push(ts); else state.results.perfect.push(ts);
-      render();
-      fetch(`${SCRIPT_URL}?action=save&type=Exp&studentName=${encodeURIComponent(state.name)}&problem=${encodeURIComponent(state.problem.base + '^?')}&correctAnswer=${encodeURIComponent(state.problem.targetStr)}&userAnswer=${encodeURIComponent(state.userAns)}&isCorrect=true&timeSpent=${ts}&usedBack=${ub}&score=${earn.toFixed(1)}&combo=${state.combo}&keyLog=${encodeURIComponent(state.currentKeyLog.join('>'))}`, { mode: 'no-cors' });
-      setTimeout(() => { if (state.practiceType === 'count' && state.results.perfect.length >= 20) endGame(); else nextProblem(); }, 600);
-    }
+function handleCorrect() {
+  state.isAnswerCorrect = true;
+  const timeSpent = (Date.now() - state.problem.start) / 1000;
+  const usedBack = state.currentBackspaces > 0;
+  
+  if (usedBack) {
+    state.combo = 0; 
+  } else {
+    state.combo++;
+    if (state.combo > (state.maxCombo || 0)) state.maxCombo = state.combo;
+  }
+  
+  // 新計分規則
+  const k = state.combo;
+  const bonusA = k > 0 ? 0.1 * (k - 1) : 0;
+  const bonusB = (k > 0 && k % 3 === 0) ? (0.01 * Math.pow(2, (k / 3) - 1)) : 0;
+  const earn = 1 + bonusA + bonusB;
+  
+  state.score += earn;
+  state.lastEarned = earn;
+
+  if (usedBack) state.results.corrected.push(timeSpent);
+  else state.results.perfect.push(timeSpent);
+  
+  render();
+  
+  // 傳送資料到 GAS
+  fetch(`${SCRIPT_URL}?action=save&type=Exp&studentName=${encodeURIComponent(state.name)}&problem=${encodeURIComponent(state.problem.base + '^?')}&correctAnswer=${encodeURIComponent(state.problem.targetStr)}&userAnswer=${encodeURIComponent(state.userAns)}&isCorrect=true&timeSpent=${timeSpent}&usedBack=${usedBack}&score=${earn.toFixed(2)}&combo=${state.combo}&keyLog=${encodeURIComponent(state.currentKeyLog.join('>'))}`, { mode: 'no-cors' });
+
+  setTimeout(() => { 
+    if (state.practiceType === 'count' && state.results.perfect.length >= state.target) endGame(); 
+    else nextProblem(); 
+  }, 600);
+}
     function endGame() { if (timer) clearInterval(timer); state.mode = 'end'; render(); 
       const total = state.results.perfect.length + state.results.corrected.length;
       fetch(`${SCRIPT_URL}?action=saveSummary&type=Exp&studentName=${encodeURIComponent(state.name)}&score=${state.score.toFixed(1)}&maxCombo=${state.maxCombo}&totalCount=${total}&accuracy=${((state.results.perfect.length/total)*100).toFixed(1)}`, { mode: 'no-cors' });
