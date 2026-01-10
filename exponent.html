@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>有理數指數練習 - 連擊計分版</title>
+  <title>有理數指數 - 連擊保護版</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     .key-btn { display: flex; align-items: center; justify-content: center; background-color: white; border: 1px solid #e5e7eb; border-radius: 0.75rem; font-size: 1.5rem; font-weight: bold; height: 60px; transition: all 0.05s; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
@@ -17,19 +17,16 @@
     @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3); } }
   </style>
 </head>
-<body class="bg-gray-50 overflow-x-hidden">
+<body class="bg-gray-50 overflow-x-hidden text-slate-800">
   <div id="app"></div>
 
   <script>
-    // --- 記得檢查此網址是否為最新部署的 GAS 網址 ---
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5SPY0XNjPWaRAgSmSZx1cSgTTeuACaT17Lx96Oy0TkALO0mgOKA-mr3KuUtFCNVir2Q/exec'; 
     
     let state = {
       mode: 'login', name: '', practiceType: 'timed', problem: null, userAns: '',
-      isAnswerCorrect: false,
-      results: { perfect: [], corrected: [] },
-      timeLeft: 120, target: 20,
-      score: 0, combo: 0, maxCombo: 0,
+      isAnswerCorrect: false, results: { perfect: [], corrected: [] },
+      timeLeft: 120, score: 0, combo: 0, maxCombo: 0,
       currentBackspaces: 0, currentKeyLog: []
     };
 
@@ -42,11 +39,11 @@
       if (state.mode === 'login') {
         app.innerHTML = `
           <div class="min-h-screen flex items-center justify-center p-4">
-            <div class="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full text-center border-t-8 border-indigo-600">
-              <h1 class="text-2xl font-black mb-2 italic">EXPONENT MASTER</h1>
-              <p class="text-sm text-gray-500 mb-6 font-bold">連擊越高分越多！你能拿幾分？</p>
-              <input type="text" id="nameInput" class="w-full px-4 py-3 border-2 rounded-xl mb-4 outline-none focus:border-indigo-500" placeholder="請輸入姓名" value="${state.name}">
-              <button onclick="handleStart()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-lg">進入練習</button>
+            <div class="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full text-center border-t-8 border-emerald-600">
+              <h1 class="text-2xl font-black mb-2 italic">EXPONENT LAB</h1>
+              <p class="text-sm text-gray-400 mb-6 font-bold uppercase tracking-widest text-xs">A^n 限值：1300</p>
+              <input type="text" id="nameInput" class="w-full px-4 py-3 border-2 rounded-xl mb-4 outline-none focus:border-emerald-500" placeholder="請輸入姓名" value="${state.name}">
+              <button onclick="handleStart()" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 shadow-lg active:scale-95 transition-all">Start Laboratory</button>
               <button onclick="location.href='index.html'" class="w-full mt-4 text-gray-400 text-sm italic underline">返回主選單</button>
             </div>
           </div>`;
@@ -56,10 +53,10 @@
       else if (state.mode === 'select') {
         app.innerHTML = `
           <div class="min-h-screen flex flex-col items-center justify-center p-4">
-            <h2 class="text-xl font-bold mb-6 text-gray-700 italic text-center">選擇模式<br><span class="text-sm font-normal">修正會中斷連擊喔！</span></h2>
+            <h2 class="text-xl font-black mb-6 italic text-slate-700">EXPERIMENT MODE</h2>
             <div class="grid grid-cols-2 gap-4 w-full max-w-[320px]">
-              <div onclick="startPractice('timed')" class="p-6 bg-white border-2 border-indigo-100 rounded-2xl cursor-pointer text-center font-bold hover:bg-indigo-50 active:scale-95">計時 120s</div>
-              <div onclick="startPractice('count')" class="p-6 bg-white border-2 border-indigo-100 rounded-2xl cursor-pointer text-center font-bold hover:bg-indigo-50 active:scale-95">精準 20題</div>
+              <div onclick="startPractice('timed')" class="p-6 bg-white border-2 border-emerald-100 rounded-2xl cursor-pointer text-center font-bold hover:bg-emerald-50 active:scale-95 transition-all">計時 120s</div>
+              <div onclick="startPractice('count')" class="p-6 bg-white border-2 border-emerald-100 rounded-2xl cursor-pointer text-center font-bold hover:bg-emerald-50 active:scale-95 transition-all">精準 20題</div>
             </div>
           </div>`;
       }
@@ -67,24 +64,24 @@
         app.innerHTML = `
           <div class="min-h-screen p-4 flex flex-col items-center ${state.isAnswerCorrect ? 'correct-flash' : ''}">
             <div class="w-full max-w-xl grid grid-cols-3 bg-white p-4 rounded-xl shadow mb-8 text-center items-center">
-              <div class="text-left font-bold text-gray-500 italic">${state.name}</div>
+              <div class="text-left font-bold text-gray-400 truncate text-xs italic uppercase">${state.name}</div>
               <div>
-                <div class="text-xs text-gray-400 uppercase font-bold tracking-widest">Score</div>
-                <div class="text-2xl font-black text-indigo-600">${state.score.toFixed(1)}</div>
+                <div class="text-[10px] text-gray-400 uppercase font-bold tracking-widest text-emerald-600">Score</div>
+                <div class="text-2xl font-black">${state.score.toFixed(1)}</div>
               </div>
               <div class="text-right">
-                <div class="text-xs text-gray-400 uppercase font-bold tracking-widest">Combo</div>
+                <div class="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Combo</div>
                 <div class="text-2xl font-black ${state.combo > 0 ? 'combo-text' : 'text-gray-300'}">${state.combo}</div>
               </div>
             </div>
 
             <div class="w-full max-w-xl h-2 bg-gray-200 mb-8 rounded-full overflow-hidden">
-               <div class="h-full bg-indigo-500 transition-all duration-1000" style="width: ${state.practiceType === 'timed' ? (state.timeLeft/120)*100 : (state.results.perfect.length/20)*100}%"></div>
+               <div class="h-full bg-emerald-500 transition-all duration-1000" style="width: ${state.practiceType === 'timed' ? (state.timeLeft/120)*100 : (state.results.perfect.length/20)*100}%"></div>
             </div>
 
             <div class="text-center mb-10 h-32 flex items-center justify-center">
               <div class="text-5xl font-bold text-gray-800 tracking-wider">${state.problem.html}</div>
-              <div class="text-4xl mx-4 text-indigo-500 font-black">= ${state.problem.base}<sup>?</sup></div>
+              <div class="text-4xl mx-4 text-emerald-500 font-black">= ${state.problem.base}<sup>?</sup></div>
             </div>
 
             <div class="mb-8 relative">
@@ -112,24 +109,30 @@
         const accuracy = total > 0 ? ((state.results.perfect.length / total) * 100).toFixed(1) : 0;
         app.innerHTML = `
           <div class="min-h-screen flex items-center justify-center p-4">
-            <div class="bg-white p-8 rounded-2xl shadow-xl text-center w-full max-w-sm border-b-8 border-indigo-600">
-              <h2 class="text-3xl font-black mb-1 text-slate-800 tracking-tighter uppercase">Finished</h2>
-              <div class="text-5xl font-black text-indigo-600 my-6">${state.score.toFixed(1)} <span class="text-sm font-bold text-gray-400">pts</span></div>
-              <div class="text-left space-y-2 mb-6 border-y py-4 text-sm font-bold text-slate-500">
-                <p class="flex justify-between"><span>總答對題數:</span> <span>${total}</span></p>
+            <div class="bg-white p-8 rounded-2xl shadow-xl text-center w-full max-w-sm border-b-8 border-emerald-600 animate-in fade-in zoom-in duration-300">
+              <h2 class="text-3xl font-black mb-1 text-slate-800 tracking-tighter uppercase italic">Exp Finished</h2>
+              <div class="text-5xl font-black text-emerald-600 my-6">${state.score.toFixed(1)} <span class="text-sm font-bold text-gray-400">pts</span></div>
+              <div class="text-left space-y-2 mb-8 border-y py-4 text-sm font-bold text-slate-500">
+                <p class="flex justify-between"><span>總答對數:</span> <span>${total}</span></p>
                 <p class="flex justify-between"><span>一次到位:</span> <span class="text-green-600">${state.results.perfect.length}</span></p>
                 <p class="flex justify-between text-orange-500"><span>最高連擊:</span> <span>${state.maxCombo}</span></p>
                 <p class="flex justify-between"><span>正確率:</span> <span>${accuracy}%</span></p>
               </div>
-              <button onclick="location.reload()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold mb-3 shadow-lg hover:bg-indigo-700">再次挑戰</button>
-              <button onclick="location.href='index.html'" class="w-full bg-gray-100 text-gray-500 py-3 rounded-xl font-bold uppercase hover:bg-gray-200">Main Menu</button>
+              <div id="end-actions" class="opacity-30 pointer-events-none transition-all duration-700">
+                <button onclick="location.reload()" class="w-full bg-emerald-600 text-white py-4 rounded-xl font-bold mb-3 shadow-lg hover:bg-emerald-700 active:scale-95 transition-all">再次練習</button>
+                <button onclick="location.href='index.html'" class="w-full bg-gray-100 text-gray-500 py-3 rounded-xl font-bold uppercase hover:bg-gray-200 active:scale-95 transition-all">Main Menu</button>
+                <p class="text-[10px] text-gray-300 mt-4 italic tracking-widest">截圖保護中，請稍候 1.5 秒...</p>
+              </div>
             </div>
           </div>`;
+        setTimeout(() => {
+          const acts = document.getElementById('end-actions');
+          if(acts) { acts.classList.remove('opacity-30','pointer-events-none'); acts.classList.add('opacity-100'); }
+        }, 1500);
       }
     }
 
     function handleStart() { if (state.name.trim()) { state.mode = 'select'; render(); } else { alert('請輸入姓名'); } }
-
     function startPractice(type) {
       state.practiceType = type; state.mode = 'play';
       state.results = { perfect: [], corrected: [] };
@@ -137,114 +140,67 @@
       nextProblem();
       if (type === 'timed') {
         state.timeLeft = 120;
-        timer = setInterval(() => { 
-          state.timeLeft--; 
-          if (state.timeLeft <= 0) endGame(); 
-          else render(); 
-        }, 1000);
+        timer = setInterval(() => { state.timeLeft--; if (state.timeLeft <= 0) endGame(); else render(); }, 1000);
       }
     }
-
     function gcd(x, y) { return y === 0 ? x : gcd(y, x % y); }
-
     function nextProblem() {
-      let base, a, b;
-      let isValid = false;
-      while (!isValid) {
-        base = Math.floor(Math.random() * 8) + 2; 
+      let bse, a, b; let ok = false;
+      while (!ok) {
+        bse = Math.floor(Math.random() * 8) + 2; 
         a = Math.floor(Math.random() * 10) + 1;    
         b = Math.floor(Math.random() * 8) + 2;    
-        if (Math.pow(base, a) <= 1300) isValid = true;
+        if (Math.pow(bse, a) <= 1300) ok = true;
       }
+      const tp = Math.floor(Math.random() * 3); 
+      let html = ""; let tarNum = 0; let tarStr = "";
+      const common = gcd(a, b); const sa = a / common; const sb = b / common;
+      const fStr = sb === 1 ? `${sa}` : `${sa}/${sb}`;
 
-      const type = Math.floor(Math.random() * 3); 
-      let html = "";
-      let targetNumeric = 0;
-      let targetString = "";
-      const common = gcd(a, b);
-      const sa = a / common; const sb = b / common;
-      const simpleFract = sb === 1 ? `${sa}` : `${sa}/${sb}`;
-
-      if (type === 0) { 
-        targetNumeric = a / b; targetString = simpleFract;
-        html = `<div class="inline-block relative math-font text-5xl pt-2"><span class="text-xl absolute -top-1 -left-4 font-bold italic">${b === 2 ? '' : b}</span><span>√</span><span class="border-t-4 border-black px-1">${base}<sup>${a === 1 ? '' : a}</sup></span></div>`;
-      } else if (type === 1) { 
-        targetNumeric = -a; targetString = `-${a}`;
-        html = `<div class="inline-flex flex-col items-center math-font text-5xl"><div class="border-b-2 border-black px-4 leading-none pb-1">1</div><div class="leading-none pt-2">${base}<sup>${a}</sup></div></div>`;
+      if (tp === 0) { 
+        tarNum = a / b; tarStr = fStr;
+        html = `<div class="inline-block relative math-font text-5xl pt-2"><span class="text-xl absolute -top-1 -left-4 font-bold italic">${b === 2 ? '' : b}</span><span>√</span><span class="border-t-4 border-black px-1">${bse}<sup>${a === 1 ? '' : a}</sup></span></div>`;
+      } else if (tp === 1) { 
+        tarNum = -a; tarStr = `-${a}`;
+        html = `<div class="inline-flex flex-col items-center math-font text-5xl"><div class="border-b-2 border-black px-4 leading-none pb-1">1</div><div class="leading-none pt-2">${bse}<sup>${a}</sup></div></div>`;
       } else { 
-        targetNumeric = -(a / b); targetString = sb === 1 ? `-${sa}` : `-${sa}/${sb}`;
-        html = `<div class="inline-flex flex-col items-center math-font text-4xl"><div class="border-b-2 border-black px-4 leading-none pb-1">1</div><div class="relative pt-4"><span class="text-sm absolute top-1 -left-3 font-bold italic">${b === 2 ? '' : b}</span><span>√</span><span class="border-t-2 border-black px-1">${base}<sup>${a === 1 ? '' : a}</sup></span></div></div>`;
+        tarNum = -(a / b); tarStr = sb === 1 ? `-${sa}` : `-${sa}/${sb}`;
+        html = `<div class="inline-flex flex-col items-center math-font text-4xl"><div class="border-b-2 border-black px-4 leading-none pb-1">1</div><div class="relative pt-4"><span class="text-sm absolute top-1 -left-3 font-bold italic">${b === 2 ? '' : b}</span><span>√</span><span class="border-t-2 border-black px-1">${bse}<sup>${a === 1 ? '' : a}</sup></span></div></div>`;
       }
-
-      state.problem = { targetNum: targetNumeric, targetStr: targetString, html: html, start: Date.now(), base: base };
+      state.problem = { targetNum: tarNum, targetStr: tarStr, html: html, start: Date.now(), base: bse };
       state.userAns = ''; state.isAnswerCorrect = false; state.currentBackspaces = 0; state.currentKeyLog = [];
       render();
     }
-
     function pressKey(key) {
       if (state.isAnswerCorrect) return;
       state.currentKeyLog.push(key === 'back' ? '⌫' : key);
       if (key === 'back') { state.userAns = state.userAns.slice(0, -1); state.currentBackspaces++; } 
       else { if (state.userAns.length < 10) state.userAns += key; }
       render();
-
       if (state.userAns !== "" && state.userAns !== "-" && !state.userAns.endsWith('/')) {
         try {
-          let userVal = state.userAns.includes('/') ? (state.userAns.split('/').reduce((a,b)=>a/b)) : parseFloat(state.userAns);
-          if (!isNaN(userVal) && Math.abs(userVal - state.problem.targetNum) < 0.0001) handleCorrect();
+          let uVal = state.userAns.includes('/') ? (state.userAns.split('/').reduce((a,b)=>a/b)) : parseFloat(state.userAns);
+          if (!isNaN(uVal) && Math.abs(uVal - state.problem.targetNum) < 0.0001) handleCorrect();
         } catch(e) {}
       }
     }
-
     function handleCorrect() {
       state.isAnswerCorrect = true;
-      const timeSpent = (Date.now() - state.problem.start) / 1000;
-      const usedBack = state.currentBackspaces > 0;
-      
-      if (usedBack) {
-        state.combo = 0; 
-      } else {
-        state.combo++;
-        if (state.combo > state.maxCombo) state.maxCombo = state.combo;
-      }
-      
-      // 得分算法：基礎 1 分 + 連擊獎勵
+      const ts = (Date.now() - state.problem.start) / 1000;
+      const ub = state.currentBackspaces > 0;
+      if (ub) state.combo = 0; else { state.combo++; if (state.combo > state.maxCombo) state.maxCombo = state.combo; }
       const earn = 1 + (state.combo > 0 ? 0.1 * Math.pow(2, state.combo - 1) : 0);
-      state.score += earn;
-      state.lastEarned = earn;
-
-      if (usedBack) state.results.corrected.push(timeSpent);
-      else state.results.perfect.push(timeSpent);
-      
+      state.score += earn; state.lastEarned = earn;
+      if (ub) state.results.corrected.push(ts); else state.results.perfect.push(ts);
       render();
-      
-      // --- 重點：fetch 網址加入了 score 與 combo ---
-      fetch(`${SCRIPT_URL}?action=save&type=Exp&studentName=${encodeURIComponent(state.name)}&problem=${encodeURIComponent(state.problem.base + '^?')}&correctAnswer=${encodeURIComponent(state.problem.targetStr)}&userAnswer=${encodeURIComponent(state.userAns)}&isCorrect=true&timeSpent=${timeSpent}&usedBack=${usedBack}&score=${earn.toFixed(1)}&combo=${state.combo}&keyLog=${encodeURIComponent(state.currentKeyLog.join('>'))}`, { mode: 'no-cors' });
-
-      setTimeout(() => { 
-        if (state.practiceType === 'count' && state.results.perfect.length >= state.target) endGame(); 
-        else nextProblem(); 
-      }, 600);
+      fetch(`${SCRIPT_URL}?action=save&type=Exp&studentName=${encodeURIComponent(state.name)}&problem=${encodeURIComponent(state.problem.base + '^?')}&correctAnswer=${encodeURIComponent(state.problem.targetStr)}&userAnswer=${encodeURIComponent(state.userAns)}&isCorrect=true&timeSpent=${ts}&usedBack=${ub}&score=${earn.toFixed(1)}&combo=${state.combo}&keyLog=${encodeURIComponent(state.currentKeyLog.join('>'))}`, { mode: 'no-cors' });
+      setTimeout(() => { if (state.practiceType === 'count' && state.results.perfect.length >= 20) endGame(); else nextProblem(); }, 600);
     }
-
-    function endGame() {
-      if (timer) clearInterval(timer);
+    function endGame() { if (timer) clearInterval(timer); state.mode = 'end'; render(); 
       const total = state.results.perfect.length + state.results.corrected.length;
-      const accuracy = total > 0 ? ((state.results.perfect.length / total) * 100).toFixed(1) : 0;
-
-      // --- 重點：結算 fetch 加入了總分與最高連擊 ---
-      fetch(`${SCRIPT_URL}?action=saveSummary&type=Exp&studentName=${encodeURIComponent(state.name)}&score=${state.score.toFixed(1)}&maxCombo=${state.maxCombo}&totalCount=${total}&accuracy=${accuracy}`, { mode: 'no-cors' });
-      
-      state.mode = 'end';
-      render();
+      fetch(`${SCRIPT_URL}?action=saveSummary&type=Exp&studentName=${encodeURIComponent(state.name)}&score=${state.score.toFixed(1)}&maxCombo=${state.maxCombo}&totalCount=${total}&accuracy=${((state.results.perfect.length/total)*100).toFixed(1)}`, { mode: 'no-cors' });
     }
-
-    window.onkeydown = (e) => {
-      if (state.mode === 'play' && e.target.tagName !== 'INPUT') {
-        if ((e.key >= '0' && e.key <= '9') || e.key === '-' || e.key === '/') pressKey(e.key);
-        if (e.key === 'Backspace') { e.preventDefault(); pressKey('back'); }
-      }
-    };
+    window.onkeydown = (e) => { if (state.mode === 'play' && e.target.tagName !== 'INPUT') { if ((e.key >= '0' && e.key <= '9') || e.key === '-' || e.key === '/') pressKey(e.key); if (e.key === 'Backspace') { e.preventDefault(); pressKey('back'); } } };
     render();
   </script>
 </body>
