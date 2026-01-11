@@ -15,21 +15,23 @@
       -webkit-tap-highlight-color: transparent; 
     }
     .key-btn:active { background-color: #eff6ff; transform: scale(0.95); }
+    .key-btn-back { background-color: #fff1f2; color: #e11d48; border-color: #fecdd3; height: 100%; }
     .key-btn-op { background-color: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
-    .key-btn-next { background-color: #3b82f6; color: white; border-color: #2563eb; }
+    
     .slot { 
       border-bottom: 4px solid #d1d5db; min-width: var(--fluid-slot); 
       height: 70px; display: inline-flex; align-items: center; justify-content: center; 
       font-weight: 800; font-size: var(--fluid-text); transition: all 0.2s; 
     }
     .slot.active { border-color: #3b82f6; background-color: #eff6ff; }
+
+    /* 橫向模式適配 */
     @media (orientation: landscape) and (max-height: 500px) {
       .game-container { display: flex; flex-direction: row; align-items: center; gap: 30px; padding: 10px !important; }
       .side-info { flex: 1; }
-      .side-keyboard { flex: 1; max-width: 360px; }
+      .side-keyboard { flex: 1; max-width: 320px; }
       .key-btn { height: 45px; }
       .slot { height: 50px; }
-      .score-box { margin-bottom: 5px !important; padding: 5px !important; }
     }
     .correct-flash { animation: flash 0.3s ease-out; }
     @keyframes flash { 0% { background-color: transparent; } 50% { background-color: #dbeafe; } 100% { background-color: transparent; } }
@@ -44,7 +46,7 @@
 
     let state = {
       mode: 'play',
-      name: localStorage.getItem('math_lab_name') || 'Guest_Tester',
+      name: localStorage.getItem('math_lab_name') || 'Guest',
       problem: null, userInput: "", isAnswerCorrect: false, score: 0, combo: 0, maxCombo: 0, timeLeft: TOTAL_TIME
     };
 
@@ -53,7 +55,7 @@
     function render() {
       const app = document.getElementById('app');
       if (state.mode === 'end') {
-        app.innerHTML = `<div class="min-h-screen flex items-center justify-center p-4"><div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm text-center border-b-8 border-blue-600"><h2 class="text-2xl font-black mb-4 italic uppercase">Finish</h2><div class="text-6xl font-black text-blue-600 mb-8">${state.score.toFixed(2)}</div><button onclick="location.reload()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg mb-4">Retry</button><button onclick="location.href='index.html'" class="w-full text-slate-400 font-bold">Back to Hub</button></div></div>`;
+        app.innerHTML = `<div class="min-h-screen flex items-center justify-center p-4"><div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm text-center border-b-8 border-blue-600"><h2 class="text-2xl font-black mb-4 italic uppercase text-slate-800">Finish</h2><div class="text-6xl font-black text-blue-600 mb-8">${state.score.toFixed(2)}</div><button onclick="location.reload()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg mb-4">Retry</button><button onclick="location.href='index.html'" class="w-full text-slate-400 font-bold">Back to Hub</button></div></div>`;
         return;
       }
       const timePercent = (state.timeLeft / TOTAL_TIME) * 100;
@@ -63,7 +65,7 @@
             <div class="w-full bg-gray-200 h-2 rounded-full mb-3 overflow-hidden">
               <div id="timer-bar" class="bg-blue-500 h-full" style="width: ${timePercent}%"></div>
             </div>
-            <div class="w-full grid grid-cols-3 bg-white p-3 rounded-2xl shadow-sm mb-6 items-center score-box font-bold">
+            <div class="w-full grid grid-cols-3 bg-white p-3 rounded-2xl shadow-sm mb-6 items-center font-bold">
               <div class="text-left truncate text-[10px] text-slate-300 uppercase">${state.name}</div>
               <div><div class="text-[8px] text-slate-400 uppercase">Score</div><div class="text-xl text-blue-600 font-black">${state.score.toFixed(1)}</div></div>
               <div class="text-right"><div class="text-[8px] text-slate-400 uppercase">Combo</div><div class="text-xl font-black text-orange-500">${state.combo}</div></div>
@@ -73,15 +75,15 @@
               <div class="slot active text-blue-600">${state.userInput}</div>
             </div>
           </div>
-          <div class="side-keyboard w-full max-w-md flex flex-col gap-2">
+
+          <div class="side-keyboard w-full max-w-sm">
             <div class="grid grid-cols-4 gap-2">
               <div class="col-span-3 grid grid-cols-3 gap-2">
                 ${[7,8,9,4,5,6,1,2,3].map(n => `<div onclick="pressKey('${n}')" class="key-btn shadow-sm">${n}</div>`).join('')}
                 <div onclick="pressKey('-')" class="key-btn key-btn-op shadow-sm">-</div>
-                <div onclick="pressKey('0')" class="key-btn shadow-sm">0</div>
-                <div onclick="pressKey('back')" class="key-btn bg-red-50 text-red-500 shadow-sm">⌫</div>
+                <div onclick="pressKey('0')" class="key-btn col-span-2 shadow-sm">0</div>
               </div>
-              <div onclick="pressKey('next')" class="col-span-1 key-btn key-btn-next shadow-lg text-lg font-black italic">OK</div>
+              <div onclick="pressKey('back')" class="col-span-1 key-btn key-btn-back shadow-sm text-2xl">⌫</div>
             </div>
           </div>
         </div>`;
@@ -91,28 +93,20 @@
       if (state.isAnswerCorrect || state.mode === 'end') return;
       if (key === 'back') {
         state.userInput = state.userInput.slice(0, -1);
-      } else if (key === 'next') {
-        checkAnswer(true); 
       } else if (key === '-') {
         if (state.userInput === "") state.userInput = "-";
       } else {
         if (state.userInput.length < 6) state.userInput += key;
-        checkAnswer(false); 
       }
+      checkAnswer();
       render();
     }
 
-    function checkAnswer(isManual) {
+    function checkAnswer() {
       if (state.userInput === "" || state.userInput === "-") return;
       const userAns = parseInt(state.userInput);
-      const correctAns = state.problem.ans;
-      
-      if (userAns === correctAns) {
+      if (userAns === state.problem.ans) {
         handleCorrect();
-      } else if (isManual) {
-        state.combo = 0;
-        state.userInput = "";
-        render();
       }
     }
 
@@ -148,13 +142,11 @@
       }, 1000);
     }
 
-    // 鍵盤監聽功能
     window.addEventListener('keydown', (e) => {
       if (state.mode !== 'play') return;
       if (e.key >= '0' && e.key <= '9') pressKey(e.key);
       else if (e.key === '-') pressKey('-');
       else if (e.key === 'Backspace') pressKey('back');
-      else if (e.key === 'Enter') pressKey('next');
     });
 
     nextProblem(); startTimer(); render();
