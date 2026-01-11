@@ -3,123 +3,98 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>基礎運算實驗室</title>
+  <title>加減運算實驗室 - Math Lab</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root { --fluid-text: clamp(2rem, 10vw, 4rem); --fluid-slot: clamp(2.5rem, 12vw, 5rem); }
+    body { background-color: #f8fafc; overflow-x: hidden; touch-action: manipulation; }
     .key-btn { 
       display: flex; align-items: center; justify-content: center; 
-      background-color: white; border: 1px solid #e5e7eb; border-radius: 0.75rem; 
-      font-weight: bold; font-size: clamp(1.2rem, 5vw, 2rem);
-      height: 60px; transition: all 0.05s; cursor: pointer; user-select: none;
-      -webkit-tap-highlight-color: transparent; 
+      background-color: white; border: 1px solid #e5e7eb; border-radius: 1rem; 
+      font-weight: bold; font-size: clamp(1.5rem, 6vw, 2.2rem);
+      height: 70px; transition: all 0.05s; cursor: pointer; user-select: none;
+      -webkit-tap-highlight-color: transparent; box-shadow: 0 2px 0 #e5e7eb;
     }
-    .key-btn:active { background-color: #eff6ff; transform: scale(0.95); }
-    .key-btn-back { background-color: #fff1f2; color: #e11d48; border-color: #fecdd3; height: 100%; }
-    .key-btn-op { background-color: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
-    
+    .key-btn:active { transform: translateY(2px); box-shadow: none; background-color: #f1f5f9; }
+    .key-btn-op { background-color: #eff6ff; color: #2563eb; border-color: #bfdbfe; box-shadow: 0 2px 0 #bfdbfe; }
+    .key-btn-back { background-color: #fff1f2; color: #e11d48; border-color: #fecdd3; box-shadow: 0 2px 0 #fecdd3; height: 100%; }
     .slot { 
-      border-bottom: 4px solid #d1d5db; min-width: var(--fluid-slot); 
-      height: 70px; display: inline-flex; align-items: center; justify-content: center; 
+      border-bottom: 5px solid #cbd5e1; min-width: var(--fluid-slot); 
+      height: 80px; display: inline-flex; align-items: center; justify-content: center; 
       font-weight: 800; font-size: var(--fluid-text); transition: all 0.2s; 
     }
-    .slot.active { border-color: #3b82f6; background-color: #eff6ff; }
-
-    /* 橫向模式適配 */
+    .slot.active { border-color: #3b82f6; color: #2563eb; }
     @media (orientation: landscape) and (max-height: 500px) {
-      .game-container { display: flex; flex-direction: row; align-items: center; gap: 30px; padding: 10px !important; }
-      .side-info { flex: 1; }
-      .side-keyboard { flex: 1; max-width: 320px; }
-      .key-btn { height: 45px; }
-      .slot { height: 50px; }
+      .game-container { display: flex; flex-direction: row; align-items: center; gap: 2rem; padding: 1rem !important; height: 100vh; }
+      .side-info { flex: 1.2; }
+      .side-keyboard { flex: 1; max-width: 340px; }
+      .key-btn { height: 50px; font-size: 1.5rem; }
+      .slot { height: 60px; }
+      .score-box { margin-bottom: 0.5rem !important; padding: 0.5rem !important; }
     }
-    .correct-flash { animation: flash 0.3s ease-out; }
+    .correct-flash { animation: flash 0.4s ease-out; }
     @keyframes flash { 0% { background-color: transparent; } 50% { background-color: #dbeafe; } 100% { background-color: transparent; } }
     #timer-bar { transition: width 1s linear; }
   </style>
 </head>
-<body class="bg-slate-50 overflow-x-hidden text-slate-800 font-sans">
+<body class="text-slate-800 font-sans">
   <div id="app"></div>
   <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5SPY0XNjPWaRAgSmSZx1cSgTTeuACaT17Lx96Oy0TkALO0mgOKA-mr3KuUtFCNVir2Q/exec'; 
     const TOTAL_TIME = 120;
-
     let state = {
       mode: 'play',
       name: localStorage.getItem('math_lab_name') || 'Guest',
-      problem: null, userInput: "", isAnswerCorrect: false, score: 0, combo: 0, maxCombo: 0, timeLeft: TOTAL_TIME
+      problem: null, userInput: "", hasModified: false, isAnswerCorrect: false, 
+      score: 0, combo: 0, maxCombo: 0, timeLeft: TOTAL_TIME
     };
-
     let timer = null;
 
     function render() {
       const app = document.getElementById('app');
       if (state.mode === 'end') {
-        app.innerHTML = `<div class="min-h-screen flex items-center justify-center p-4"><div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm text-center border-b-8 border-blue-600"><h2 class="text-2xl font-black mb-4 italic uppercase text-slate-800">Finish</h2><div class="text-6xl font-black text-blue-600 mb-8">${state.score.toFixed(2)}</div><button onclick="location.reload()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg mb-4">Retry</button><button onclick="location.href='index.html'" class="w-full text-slate-400 font-bold">Back to Hub</button></div></div>`;
+        app.innerHTML = `<div class="min-h-screen flex items-center justify-center p-4"><div class="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-sm text-center border-b-[12px] border-blue-600"><h2 class="text-2xl font-black mb-2 italic uppercase text-slate-400">Time's Up!</h2><div class="text-7xl font-black text-blue-600 mb-8">${state.score.toFixed(2)}</div><div class="flex flex-col gap-3"><button onclick="location.reload()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg text-xl">RETRY</button><button onclick="location.href='index.html'" class="w-full text-slate-400 font-bold py-2">BACK TO HUB</button></div></div></div>`;
         return;
       }
       const timePercent = (state.timeLeft / TOTAL_TIME) * 100;
-      app.innerHTML = `
-        <div class="min-h-screen p-3 flex flex-col items-center max-w-5xl mx-auto game-container ${state.isAnswerCorrect ? 'correct-flash' : ''}">
-          <div class="side-info w-full text-center">
-            <div class="w-full bg-gray-200 h-2 rounded-full mb-3 overflow-hidden">
-              <div id="timer-bar" class="bg-blue-500 h-full" style="width: ${timePercent}%"></div>
-            </div>
-            <div class="w-full grid grid-cols-3 bg-white p-3 rounded-2xl shadow-sm mb-6 items-center font-bold">
-              <div class="text-left truncate text-[10px] text-slate-300 uppercase">${state.name}</div>
-              <div><div class="text-[8px] text-slate-400 uppercase">Score</div><div class="text-xl text-blue-600 font-black">${state.score.toFixed(1)}</div></div>
-              <div class="text-right"><div class="text-[8px] text-slate-400 uppercase">Combo</div><div class="text-xl font-black text-orange-500">${state.combo}</div></div>
-            </div>
-            <div class="text-center mb-8 flex items-center justify-center gap-4">
-              <div class="font-black text-slate-800" style="font-size: var(--fluid-text)">${state.problem.display} =</div>
-              <div class="slot active text-blue-600">${state.userInput}</div>
-            </div>
-          </div>
-
-          <div class="side-keyboard w-full max-w-sm">
-            <div class="grid grid-cols-4 gap-2">
-              <div class="col-span-3 grid grid-cols-3 gap-2">
-                ${[7,8,9,4,5,6,1,2,3].map(n => `<div onclick="pressKey('${n}')" class="key-btn shadow-sm">${n}</div>`).join('')}
-                <div onclick="pressKey('-')" class="key-btn key-btn-op shadow-sm">-</div>
-                <div onclick="pressKey('0')" class="key-btn col-span-2 shadow-sm">0</div>
-              </div>
-              <div onclick="pressKey('back')" class="col-span-1 key-btn key-btn-back shadow-sm text-2xl">⌫</div>
-            </div>
-          </div>
-        </div>`;
+      app.innerHTML = `<div class="min-h-screen p-4 flex flex-col items-center max-w-6xl mx-auto game-container ${state.isAnswerCorrect ? 'correct-flash' : ''}"><div class="side-info w-full text-center"><div class="w-full bg-slate-200 h-3 rounded-full mb-4 overflow-hidden shadow-inner"><div id="timer-bar" class="bg-blue-500 h-full shadow-[0_0_10px_rgba(59,130,246,0.5)]" style="width: ${timePercent}%"></div></div><div class="w-full grid grid-cols-3 bg-white p-4 rounded-3xl shadow-sm mb-8 items-center font-bold score-box border border-slate-100"><div class="text-left truncate text-xs text-slate-300 uppercase tracking-widest">${state.name}</div><div><div class="text-[10px] text-slate-400 uppercase tracking-tighter">Score</div><div class="text-2xl text-blue-600 font-black tracking-tight">${state.score.toFixed(2)}</div></div><div class="text-right"><div class="text-[10px] text-slate-400 uppercase tracking-tighter">Combo</div><div class="text-2xl font-black text-orange-500">${state.combo}</div></div></div><div class="flex items-center justify-center gap-6 mb-10"><div class="font-black text-slate-800 tracking-tighter" style="font-size: var(--fluid-text)">${state.problem.display} =</div><div class="slot active">${state.userInput}</div></div></div><div class="side-keyboard w-full max-w-sm"><div class="grid grid-cols-4 gap-3"><div class="col-span-3 grid grid-cols-3 gap-3">${[7,8,9,4,5,6,1,2,3].map(n => `<div onclick="pressKey('${n}')" class="key-btn">${n}</div>`).join('')}<div onclick="pressKey('-')" class="key-btn key-btn-op">-</div><div onclick="pressKey('0')" class="key-btn col-span-2">0</div></div><div onclick="pressKey('back')" class="col-span-1 key-btn key-btn-back">⌫</div></div></div></div>`;
     }
 
     function pressKey(key) {
       if (state.isAnswerCorrect || state.mode === 'end') return;
-      if (key === 'back') {
-        state.userInput = state.userInput.slice(0, -1);
-      } else if (key === '-') {
-        if (state.userInput === "") state.userInput = "-";
-      } else {
-        if (state.userInput.length < 6) state.userInput += key;
-      }
-      checkAnswer();
-      render();
+      if (key === 'back') { state.userInput = state.userInput.slice(0, -1); state.hasModified = true; }
+      else if (key === '-') { if (state.userInput === "") state.userInput = "-"; }
+      else { if (state.userInput.length < 7) state.userInput += key; }
+      checkAnswer(); render();
     }
 
     function checkAnswer() {
       if (state.userInput === "" || state.userInput === "-") return;
       const userAns = parseInt(state.userInput);
-      if (userAns === state.problem.ans) {
-        handleCorrect();
-      }
+      if (userAns === state.problem.ans) handleCorrect();
     }
 
     function handleCorrect() {
       state.isAnswerCorrect = true;
       const ts = (Date.now() - state.problem.start) / 1000;
-      state.combo++;
+      if (state.hasModified) state.combo = 0; else state.combo++;
       if (state.combo > state.maxCombo) state.maxCombo = state.combo;
-      let earn = 1 + (0.1 * (state.combo - 1));
+
+      let earn = 0;
+      if (state.combo === 0) {
+        earn = 1.0;
+      } else {
+        // 純粹數學累加：線性 + 階梯指數 (只有 3 的倍數有 bonus)
+        earn = 1 + (0.1 * (state.combo - 1));
+        if (state.combo % 3 === 0) {
+          earn += 0.01 * Math.pow(2, (state.combo / 3) - 1);
+        }
+      }
+      
       state.score += earn;
       render();
-      fetch(`${SCRIPT_URL}?action=save&type=AddSub&studentName=${encodeURIComponent(state.name)}&problem=${encodeURIComponent(state.problem.display)}&correctAnswer=${state.problem.ans}&userAnswer=${state.userInput}&isCorrect=true&timeSpent=${ts}&score=${earn.toFixed(4)}&combo=${state.combo}`, { mode: 'no-cors' });
-      setTimeout(nextProblem, 200);
+      fetch(`${SCRIPT_URL}?action=save&type=AddSub&studentName=${encodeURIComponent(state.name)}&problem=${encodeURIComponent(state.problem.display)}&correctAnswer=${state.problem.ans}&userAnswer=${state.userInput}&isCorrect=true&timeSpent=${ts}&score=${earn}&combo=${state.combo}`, { mode: 'no-cors' });
+      setTimeout(nextProblem, 220);
     }
 
     function nextProblem() {
@@ -127,7 +102,7 @@
       const b = Math.floor(Math.random() * 41) - 20;
       const op = Math.random() > 0.5 ? '+' : '-';
       state.problem = { display: `${a} ${op} (${b})`, ans: op === '+' ? (a + b) : (a - b), start: Date.now() };
-      state.userInput = ""; state.isAnswerCorrect = false; render();
+      state.userInput = ""; state.isAnswerCorrect = false; state.hasModified = false; render();
     }
 
     function startTimer() {
