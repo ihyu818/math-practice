@@ -1,0 +1,35 @@
+function handleCorrect() {
+  state.isAnswerCorrect = true;
+  const ts = (Date.now() - state.problem.start) / 1000;
+  
+  // 嚴格判定：按過退格就歸零
+  if (state.hasModified) {
+    state.combo = 0;
+  } else {
+    state.combo++;
+  }
+
+  if (state.combo > state.maxCombo) state.maxCombo = state.combo;
+  
+  let earn = 0;
+  if (state.combo === 0) {
+    earn = 1.0; 
+  } else {
+    // A. 線性成長
+    earn = 1 + (0.1 * (state.combo - 1));
+    
+    // B. 階梯指數：僅在 3 的倍數觸發
+    if (state.combo % 3 === 0) {
+      const k = state.combo / 3;
+      earn += 0.01 * Math.pow(2, k - 1);
+    }
+  }
+  
+  state.score += earn;
+  render();
+  
+  // 送出紀錄，確保 score 欄位包含所有獎勵
+  fetch(`${SCRIPT_URL}?action=save&type=AddSub&studentName=${encodeURIComponent(state.name)}&score=${earn.toFixed(4)}&combo=${state.combo}...`, { mode: 'no-cors' });
+  
+  setTimeout(nextProblem, 200);
+}
