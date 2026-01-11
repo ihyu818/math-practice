@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>數學實驗室 - 遊戲選單</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .game-card {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .game-card:active {
+      transform: scale(0.95);
+    }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col items-center p-6 text-slate-800">
+  
+  <header class="text-center mt-8 mb-12">
+    <h1 class="text-4xl font-black italic text-slate-900 tracking-tighter uppercase leading-none">
+      Math Lab<br><span class="text-pink-600 text-2xl">Quest Hub</span>
+    </h1>
+    <p class="text-slate-400 font-bold mt-2 tracking-widest text-sm uppercase">選擇你的挑戰項目</p>
+  </header>
+
+  <main class="w-full max-w-sm flex flex-col gap-4">
+    
+    <a href="addsub.html" class="game-card bg-white p-6 rounded-3xl shadow-sm border-b-4 border-blue-500 flex items-center gap-4 hover:shadow-md">
+      <div class="bg-blue-100 text-blue-600 w-12 h-12 rounded-2xl flex items-center justify-center text-2xl font-black">±</div>
+      <div>
+        <h2 class="font-black text-xl text-slate-800">基礎運算</h2>
+        <p class="text-xs text-slate-400 font-bold">ADDITION & SUBTRACTION</p>
+      </div>
+    </a>
+
+    <a href="exponent.html" class="game-card bg-white p-6 rounded-3xl shadow-sm border-b-4 border-amber-500 flex items-center gap-4 hover:shadow-md">
+      <div class="bg-amber-100 text-amber-600 w-12 h-12 rounded-2xl flex items-center justify-center text-2xl font-black">xⁿ</div>
+      <div>
+        <h2 class="font-black text-xl text-slate-800">指數破壞者</h2>
+        <p class="text-xs text-slate-400 font-bold">EXPONENT CALCULATOR</p>
+      </div>
+    </a>
+
+    <a href="factorization.html" class="game-card bg-white p-6 rounded-3xl shadow-sm border-b-4 border-pink-600 flex items-center gap-4 hover:shadow-md">
+      <div class="bg-pink-100 text-pink-600 w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-black">( )( )</div>
+      <div>
+        <h2 class="font-black text-xl text-slate-800">因式分解實驗室</h2>
+        <p class="text-xs text-slate-400 font-bold">QUADRATIC FACTORING</p>
+      </div>
+    </a>
+
+    <div class="game-card bg-slate-200 p-6 rounded-3xl border-b-4 border-slate-300 flex items-center gap-4 opacity-60">
+      <div class="bg-slate-300 text-slate-500 w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-black">?</div>
+      <div>
+        <h2 class="font-black text-xl text-slate-500">即將推出</h2>
+        <p class="text-xs text-slate-400 font-bold">COMING SOON...</p>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="mt-auto py-8">
+    <div class="bg-white px-6 py-2 rounded-full shadow-sm border border-slate-100 text-[10px] font-black tracking-widest text-slate-300 uppercase">
+      Precision Mode: Active (Backspace Penalties Enabled)
+    </div>
+  </footer>
+
+</body>
+</html>
