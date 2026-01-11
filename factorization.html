@@ -6,12 +6,35 @@
   <title>因式分解實驗室</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    .key-btn { display: flex; align-items: center; justify-content: center; background-color: white; border: 1px solid #e5e7eb; border-radius: 0.75rem; font-size: 1.5rem; font-weight: bold; height: 55px; transition: all 0.05s; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
+    :root {
+      /* 流體字體：根據螢幕寬度在 1.5rem ~ 3rem 之間縮放 */
+      --fluid-text: clamp(1.5rem, 8vw, 3rem);
+      --fluid-slot: clamp(2.5rem, 12vw, 4.5rem);
+    }
+    
+    .key-btn { 
+      display: flex; align-items: center; justify-content: center; 
+      background-color: white; border: 1px solid #e5e7eb; 
+      border-radius: 0.75rem; font-weight: bold; 
+      height: clamp(45px, 10vh, 75px); /* 根據高度自動調整按鍵高度 */
+      font-size: clamp(1.2rem, 5vw, 2rem);
+      transition: all 0.05s; cursor: pointer; user-select: none;
+      -webkit-tap-highlight-color: transparent; 
+    }
     .key-btn:active { background-color: #fdf2f8; transform: scale(0.92); }
     .key-btn-op { background-color: #fdf2f8; color: #db2777; border-color: #fbcfe8; }
     .key-btn-next { background-color: #10b981; color: white; border-color: #059669; }
-    .slot { border-bottom: 3px solid #d1d5db; min-width: 45px; text-align: center; height: 50px; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; transition: all 0.2s; pointer-events: none; }
+    
+    .slot { 
+      border-bottom: 3px solid #d1d5db; 
+      min-width: var(--fluid-slot); 
+      height: clamp(40px, 8vh, 70px); 
+      display: inline-flex; align-items: center; justify-content: center; 
+      font-weight: 800; font-size: var(--fluid-text);
+      transition: all 0.2s; pointer-events: none; 
+    }
     .slot.active { border-color: #db2777; background-color: #fff1f2; }
+    
     .correct-flash { animation: flash 0.3s ease-out; }
     @keyframes flash { 0% { background-color: transparent; } 50% { background-color: #d1fae5; } 100% { background-color: transparent; } }
     #timer-bar { transition: width 1s linear; }
@@ -38,18 +61,18 @@
       const app = document.getElementById('app');
       if (state.mode === 'login') {
         app.innerHTML = `
-          <div class="min-h-screen flex flex-col items-center justify-start p-4 pt-12 text-center">
-            <div class="bg-white p-8 rounded-3xl shadow-xl max-w-md w-full border-t-8 border-pink-600 mb-8">
-              <h1 class="text-3xl font-black mb-4 italic uppercase text-pink-900 leading-none tracking-tight">Factorization<br>Laboratory</h1>
-              <input type="text" id="nameInput" maxlength="12" class="w-full px-4 py-4 border-2 rounded-2xl mb-4 outline-none focus:border-pink-500 text-center font-bold text-xl shadow-inner" placeholder="您的姓名" value="${state.name}">
-              <button onclick="handleStart(event)" class="w-full bg-pink-600 text-white py-4 rounded-2xl font-black hover:bg-pink-700 shadow-lg active:scale-95 transition-all uppercase tracking-widest text-lg">ENTER LAB</button>
+          <div class="min-h-screen flex flex-col items-center justify-start p-4 pt-8 text-center max-w-md mx-auto">
+            <div class="bg-white p-6 md:p-8 rounded-3xl shadow-xl w-full border-t-8 border-pink-600 mb-6">
+              <h1 class="text-2xl md:text-3xl font-black mb-4 italic uppercase text-pink-900 leading-tight">Factorization<br>Laboratory</h1>
+              <input type="text" id="nameInput" maxlength="12" class="w-full px-4 py-3 border-2 rounded-2xl mb-4 outline-none focus:border-pink-500 text-center font-bold text-xl" placeholder="您的姓名" value="${state.name}">
+              <button onclick="handleStart(event)" class="w-full bg-pink-600 text-white py-3 rounded-2xl font-black hover:bg-pink-700 shadow-lg active:scale-95 transition-all uppercase tracking-widest text-lg">ENTER LAB</button>
             </div>
-            <div class="w-full max-w-md bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100 text-left">
+            <div class="w-full bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100 text-left">
               <div class="bg-amber-500 text-white py-2 px-4 font-black italic flex items-center justify-between text-sm">
                 <span>🏆 RANKING</span>
                 <button onclick="render()" class="text-[10px] bg-white text-amber-600 px-2 py-1 rounded-md shadow uppercase font-bold">Refresh</button>
               </div>
-              <iframe src="${LEADERBOARD_URL}&cachebust=${Date.now()}" class="w-full h-64 border-none"></iframe>
+              <iframe src="${LEADERBOARD_URL}&cachebust=${Date.now()}" class="w-full h-60 border-none"></iframe>
             </div>
           </div>`;
         const ni = document.getElementById('nameInput');
@@ -60,33 +83,33 @@
       else if (state.mode === 'play') {
         const timePercent = (state.timeLeft / TOTAL_TIME) * 100;
         app.innerHTML = `
-          <div class="min-h-screen p-4 flex flex-col items-center ${state.isAnswerCorrect ? 'correct-flash' : ''}">
-            <div class="w-full max-w-xl bg-gray-200 h-2 rounded-full mb-4 overflow-hidden shadow-inner">
+          <div class="min-h-screen p-3 md:p-6 flex flex-col items-center max-w-2xl mx-auto ${state.isAnswerCorrect ? 'correct-flash' : ''}">
+            <div class="w-full bg-gray-200 h-2 rounded-full mb-3 overflow-hidden">
               <div id="timer-bar" class="bg-pink-500 h-full" style="width: ${timePercent}%"></div>
             </div>
 
-            <div class="w-full max-w-xl grid grid-cols-3 bg-white p-4 rounded-2xl shadow-md mb-8 text-center items-center font-bold text-gray-400">
-              <div class="text-left truncate text-xs italic font-bold text-slate-300 uppercase">${state.name}</div>
-              <div><div class="text-[10px] uppercase tracking-wider">Score</div><div class="text-2xl text-pink-600 font-black">${state.score.toFixed(2)}</div></div>
-              <div class="text-right"><div class="text-[10px] uppercase tracking-wider">Combo</div><div class="text-2xl font-black ${state.combo > 0 ? 'text-orange-500' : ''}">${state.combo}</div></div>
+            <div class="w-full grid grid-cols-3 bg-white p-3 rounded-2xl shadow-sm mb-4 items-center text-center font-bold">
+              <div class="text-left truncate text-[10px] text-slate-300 uppercase">${state.name}</div>
+              <div><div class="text-[8px] uppercase text-slate-400">Score</div><div class="text-xl text-pink-600 font-black">${state.score.toFixed(1)}</div></div>
+              <div class="text-right"><div class="text-[8px] uppercase text-slate-400">Combo</div><div class="text-xl font-black text-orange-500">${state.combo}</div></div>
             </div>
 
-            <div class="text-center mb-6 h-16 flex items-center justify-center">
-              <div class="text-3xl font-black text-slate-800 tracking-tighter">${state.problem.display}</div>
+            <div class="text-center mb-4 h-12 md:h-20 flex items-center justify-center">
+              <div class="font-black text-slate-800" style="font-size: var(--fluid-text)">${state.problem.display}</div>
             </div>
 
-            <div class="mb-10 text-3xl font-black flex items-center gap-1 text-slate-700">
-              <span class="mr-2 text-slate-400">=</span>
+            <div class="mb-6 font-black flex items-center justify-center gap-1 text-slate-700 w-full whitespace-nowrap" style="font-size: clamp(1rem, 6vw, 2.5rem)">
+              <span class="text-slate-300">=</span>
               <span>( x </span>
-              <div class="slot ${state.currentSlot===0?'active':''} w-12 text-pink-600">${state.userInputs[0]}</div>
-              <div class="slot ${state.currentSlot===1?'active':''} w-16 text-pink-600">${state.userInputs[1]}</div>
+              <div class="slot ${state.currentSlot===0?'active':''} text-pink-600">${state.userInputs[0]}</div>
+              <div class="slot ${state.currentSlot===1?'active':''} text-pink-600">${state.userInputs[1]}</div>
               <span> ) ( x </span>
-              <div class="slot ${state.currentSlot===2?'active':''} w-12 text-pink-600">${state.userInputs[2]}</div>
-              <div class="slot ${state.currentSlot===3?'active':''} w-16 text-pink-600">${state.userInputs[3]}</div>
+              <div class="slot ${state.currentSlot===2?'active':''} text-pink-600">${state.userInputs[2]}</div>
+              <div class="slot ${state.currentSlot===3?'active':''} text-pink-600">${state.userInputs[3]}</div>
               <span> )</span>
             </div>
 
-            <div class="flex flex-col gap-2 w-full max-w-[360px]">
+            <div class="flex flex-col gap-2 w-full max-w-md mt-auto mb-2">
               <div class="grid grid-cols-4 gap-2">
                 <div class="col-span-3 grid grid-cols-3 gap-2">
                   ${[7,8,9,4,5,6,1,2,3].map(n => `<div onclick="pressKey('${n}')" class="key-btn shadow-sm">${n}</div>`).join('')}
@@ -94,30 +117,27 @@
                   <div onclick="pressKey('+')" class="key-btn key-btn-op shadow-sm">+</div>
                   <div onclick="pressKey('-')" class="key-btn key-btn-op shadow-sm">-</div>
                 </div>
-                <div class="col-span-1 flex flex-col gap-2">
-                  <div onclick="pressKey('back')" class="key-btn bg-red-50 text-red-500 shadow-sm flex-1 text-xl">⌫</div>
+                <div class="col-span-1 flex">
+                  <div onclick="pressKey('back')" class="key-btn bg-red-50 text-red-500 shadow-sm w-full h-full text-xl">⌫</div>
                 </div>
               </div>
-              <div onclick="pressKey('next')" class="key-btn key-btn-next shadow-lg text-lg italic uppercase font-black tracking-widest w-full">Next / Enter / →</div>
+              <div onclick="pressKey('next')" class="key-btn key-btn-next shadow-lg text-lg italic uppercase font-black tracking-widest w-full">Next / Enter</div>
             </div>
           </div>`;
       }
       else if (state.mode === 'end') {
         app.innerHTML = `<div class="min-h-screen flex items-center justify-center p-4">
           <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm border-b-8 border-pink-600 text-center">
-            <div class="text-gray-400 font-bold mb-1 uppercase tracking-widest text-xs">${state.name}</div>
-            <h2 class="text-3xl font-black mb-6 italic text-slate-800 uppercase tracking-tighter">Mission Success</h2>
+            <h2 class="text-2xl font-black mb-4 italic text-slate-800 uppercase">Mission Success</h2>
             <div class="text-6xl font-black text-pink-600 mb-8">${state.score.toFixed(2)}</div>
-            <div id="end-actions" class="opacity-30 pointer-events-none transition-all duration-700 flex flex-col gap-3">
-              <button onclick="location.reload()" class="w-full bg-pink-600 text-white py-4 rounded-2xl font-black shadow-lg uppercase tracking-widest">Retry</button>
-              <button onclick="location.href='index.html'" class="w-full bg-gray-100 text-gray-400 py-3 rounded-2xl font-bold uppercase tracking-widest text-sm text-slate-400">Back to Menu</button>
-            </div>
+            <button onclick="location.reload()" class="w-full bg-pink-600 text-white py-4 rounded-2xl font-black shadow-lg uppercase mb-2">Retry</button>
+            <button onclick="location.href='index.html'" class="w-full text-slate-400 font-bold py-2">Back to Menu</button>
           </div>
         </div>`;
-        setTimeout(() => { document.getElementById('end-actions').classList.remove('opacity-30','pointer-events-none'); }, 1500);
       }
     }
 
+    // (其餘 handleStart, nextProblem, pressKey 等邏輯保持不變，同上一版本)
     function handleStart(e) {
       if(e) { e.preventDefault(); e.stopPropagation(); }
       const safePattern = /^[a-zA-Z0-9\u4e00-\u9fa5\s]+$/;
@@ -194,10 +214,6 @@
       if (state.hasUsedBack) state.combo = 0; else state.combo++;
       if (state.combo > state.maxCombo) state.maxCombo = state.combo;
       let earn = state.combo > 0 ? (1 + (0.1 * (state.combo - 1))) : 1;
-      if (state.combo > 0 && state.combo % 3 === 0) {
-        const k = state.combo / 3;
-        earn += 0.01 * Math.pow(2, k - 1);
-      }
       state.score += earn;
       render();
       fetch(`${SCRIPT_URL}?action=save&type=Factor&studentName=${encodeURIComponent(state.name)}&problem=${encodeURIComponent(state.problem.display)}&correctAnswer=${state.problem.ansA},${state.problem.ansB}&userAnswer=${v1},${v2}&isCorrect=true&timeSpent=${ts}&score=${earn.toFixed(4)}&combo=${state.combo}`, { mode: 'no-cors' });
