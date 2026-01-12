@@ -4,11 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>MATH LAB - HUB</title>
-  <link href="https://fonts.googleapis.com/css2?family=Lora:italic,wght@700&display=swap" rel="stylesheet">
+  <!-- <link href="https://fonts.googleapis.com/css2?family=Lora:italic,wght@700&display=swap" rel="stylesheet"> -->
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@1,700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { background-color: #ffffff; }
-    .math-font { font-family: 'Lora', serif; font-style: italic; }
+    .math-font { 
+        font-family: 'Lora', serif; 
+        font-style: italic; 
+        /* 增加這一行，確保在手機上字母寬度正確 */
+        font-variant-numeric: tabular-nums; 
+    }
     .icon-card {
       aspect-ratio: 1 / 1;
       width: clamp(100px, 25vw, 140px);
@@ -25,7 +31,12 @@
     .icon-symbol { font-size: clamp(3.5rem, 14vw, 5rem); line-height: 1; }
     .icon-symbol-small { font-size: clamp(2.2rem, 9vw, 3.5rem); line-height: 1; }
     .exponent-base { position: relative; display: inline-block; }
-    .exponent-power { font-size: 0.55em; position: absolute; top: -0.1em; left: 0.85em; }
+    .exponent-power { 
+      font-size: 0.55em; 
+      position: absolute; 
+      top: -0.15em; /* 稍微往上提一點 */
+      left: 0.8em;  /* 根據手機字體寬度微調 */
+    }
     .grid-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: clamp(1.25rem, 5vw, 2.5rem); }
     @media (min-width: 640px) { .grid-container { grid-template-columns: repeat(4, 1fr); } }
 
