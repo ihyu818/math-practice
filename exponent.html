@@ -46,11 +46,12 @@
       else if (state.mode === 'select') {
         app.innerHTML = `
           <div class="min-h-screen flex flex-col items-center justify-center p-4">
-            <h2 class="text-xl font-black mb-6 italic text-slate-700 uppercase tracking-widest text-center">Select Experiment</h2>
-            <div class="grid grid-cols-2 gap-4 w-full max-w-[320px]">
+            <h2 class="text-xl font-black mb-2 italic text-slate-700 uppercase tracking-widest text-center">Select Experiment</h2>
+            <p class="text-emerald-600 font-bold mb-6">實驗員：${state.name}</p> <div class="grid grid-cols-2 gap-4 w-full max-w-[320px]">
               <div onclick="startPractice('timed')" class="p-6 bg-white border-2 border-emerald-100 rounded-2xl cursor-pointer text-center font-bold hover:bg-emerald-50 active:scale-95 shadow-sm">計時 120s</div>
               <div onclick="startPractice('count')" class="p-6 bg-white border-2 border-emerald-100 rounded-2xl cursor-pointer text-center font-bold hover:bg-emerald-50 active:scale-95 shadow-sm">精準 20題</div>
             </div>
+            <button onclick="location.href='index.html'" class="mt-8 text-gray-400 text-sm italic underline">返回總部入口</button>
           </div>`;
       }
       else if (state.mode === 'play') {
