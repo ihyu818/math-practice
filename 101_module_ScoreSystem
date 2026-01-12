@@ -1,0 +1,46 @@
+/**
+ * ScoreSystem 模組：統一處理計分、Combo 與資料傳送
+ */
+const ScoreSystem = {
+  // 計算本次得分
+  calculateEarn: (combo, hasUsedBack) => {
+    if (hasUsedBack) return 1.0; // 有修改過，只給基本分 1 分
+    const k = combo;
+    const bonusA = k > 0 ? 0.1 * (k - 1) : 0;
+    const bonusB = (k > 0 && k % 3 === 0) ? (0.01 * Math.pow(2, (k / 3) - 1)) : 0;
+    return 1 + bonusA + bonusB;
+  },
+
+  // 處理答對時的狀態更新
+  handleCorrect: (state, ts, problemInfo) => {
+    // 1. 處理 Combo 判定：只要按過退格，Combo 就歸零
+    if (state.hasUsedBack) {
+      state.combo = 0;
+    } else {
+      state.combo++;
+      if (state.combo > state.maxCombo) state.maxCombo = state.combo;
+    }
+
+    // 2. 計算得分
+    const earn = ScoreSystem.calculateEarn(state.combo, state.hasUsedBack);
+    state.score += earn;
+
+    // 3. 傳送資料到 Google Sheet (非同步)
+    const params = new URLSearchParams({
+      action: 'save',
+      type: problemInfo.type, // 'Square', 'Factor', 'Angle' 等
+      studentName: state.name,
+      problem: problemInfo.display,
+      correctAnswer: problemInfo.ans,
+      userAnswer: problemInfo.userAns,
+      isCorrect: 'true',
+      timeSpent: ts.toFixed(2),
+      score: earn.toFixed(2),
+      combo: state.combo
+    });
+
+    fetch(`${SCRIPT_URL}?${params.toString()}`, { mode: 'no-cors' });
+    
+    return earn; // 回傳得分，供畫面顯示
+  }
+};
