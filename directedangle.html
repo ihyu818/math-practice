@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>廣義角實驗室 - Math Lab</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { --fluid-text: clamp(2rem, 10vw, 4rem); }
+    body { background-color: #f8fafc; overflow: hidden; touch-action: none; }
+    canvas { touch-action: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+    .score-box { border: 1px solid #f1f5f9; }
+    #timer-bar { transition: width 1s linear; }
+    .correct-flash { animation: flash 0.4s ease-out; }
+    @keyframes flash { 0% { background-color: transparent; } 50% { background-color: #dbeafe; } 100% { background-color: transparent; } }
+  </style>
+</head>
+<body class="text-slate-800 font-sans">
+  <div id="app"></div>
+
+  <script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5SPY0XNjPWaRAgSmSZx1cSgTTeuACaT17Lx96Oy0TkALO0mgOKA-mr3KuUtFCNVir2Q/exec'; 
+    const TOTAL_TIME = 120;
+    
+    let state = {
+      mode: 'play',
+      name: localStorage.getItem('math_lab_name') || 'Guest',
+      targetAngle: null,
+      lastAngle: null, // 用於防重複
+      userAngle: 0,
+      startTime: 0,
+      score: 0, combo: 0, maxCombo: 0, timeLeft: TOTAL_TIME,
+      totalProblems: 0, perfectCorrect: 0,
+      accuracy: 0, isCorrectFlash: false, isDown: false
+    };
+
+    let timer = null;
+    const specialAngles = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330];
+
+    function render() {
+      const app = document.getElementById('app');
+      
+      if (state.mode === 'end') {
+        app.innerHTML = /* html */ `
+          <div class="min-h-screen flex items-center justify-center p-4 bg-slate-100">
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-md text-center border-b-[12px] border-blue-600">
+              <h2 class="text-xl font-black mb-1 italic uppercase text-slate-400">Challenge Finished</h2>
+              <div class="text-lg font-bold text-slate-600 mb-4">${state.name}</div>
+              <div class="text-6xl font-black text-blue-600 mb-8 leading-tight">${state.score.toFixed(2)}</div>
+              <div class="space-y-3 mb-10 text-left bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                <div class="flex justify-between items-center"><span class="text-slate-500 font-bold">總答對數</span><span class="text-slate-800 font-black text-xl">${state.totalProblems}</span></div>
+                <div class="flex justify-between items-center"><span class="text-slate-500 font-bold">最高連擊</span><span class="text-orange-500 font-black text-xl">${state.maxCombo}</span></div>
+                <div class="flex justify-between items-center"><span class="text-slate-500 font-bold">一次到位率</span><span class="text-slate-800 font-black text-xl">${state.accuracy}%</span></div>
+              </div>
+              <button onclick="location.reload()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg text-xl active:scale-95 transition-all">再次挑戰</button>
+            </div>
+          </div>`;
+        return;
+      }
+
+      const timePercent = (state.timeLeft / TOTAL_TIME) * 100;
+      app.innerHTML = /* html */ `
+        <div class="min-h-screen p-4 flex flex-col items-center max-w-6xl mx-auto ${state.isCorrectFlash ? 'correct-flash' : ''}">
+          <div class="w-full text-center">
+            <div class="w-full bg-slate-200 h-3 rounded-full mb-4 overflow-hidden shadow-inner">
+              <div id="timer-bar" class="bg-blue-500 h-full" style="width: ${timePercent}%"></div>
+            </div>
+            <div class="w-full grid grid-cols-3 bg-white p-4 rounded-3xl shadow-sm mb-6 items-center font-bold score-box">
+              <div class="text-left text-xs text-slate-300 tracking-widest truncate">${state.name}</div>
+              <div><div class="text-[10px] text-slate-400 uppercase">Score</div><div class="text-2xl text-blue-600 font-black">${state.score.toFixed(2)}</div></div>
+              <div class="text-right"><div class="text-[10px] text-slate-400 uppercase">Combo</div><div class="text-2xl font-black text-orange-500">${state.combo}</div></div>
+            </div>
+            <div class="mb-2 text-slate-400 font-bold tracking-widest uppercase text-sm">Target Angle</div>
+            <div class="font-black text-slate-800 mb-6 italic" style="font-size: var(--fluid-text)">${state.targetAngle}°</div>
+            <div class="relative inline-block shadow-2xl rounded-full bg-white p-2 border-4 border-slate-50">
+              <canvas id="angleCanvas" width="360" height="360"></canvas>
+            </div>
+          </div>
+        </div>`;
+      drawCircle();
+    }
+
+    
+    function drawCircle() {
+      const canvas = document.getElementById('angleCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const cx = 180, cy = 180, r = 175;
+
+      ctx.clearRect(0, 0, 360, 360);
+      
+      // 繪製座標軸
+      ctx.setLineDash([]);
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, 0); ctx.lineTo(cx, 360);
+      ctx.moveTo(0, cy); ctx.lineTo(360, cy);
+      ctx.stroke();
+
+      // 繪製特殊角虛線 (磁吸點提示)
+      ctx.setLineDash([4, 6]);
+      ctx.strokeStyle = '#cbd5e1';
+      specialAngles.forEach(deg => {
+        const rad = deg * Math.PI / 180;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + r * Math.cos(rad), cy - r * Math.sin(rad));
+        ctx.stroke();
+      });
+
+      // 繪製主指針
+      const userRad = state.userAngle * Math.PI / 180;
+      ctx.setLineDash([]);
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = 'rgba(59, 130, 246, 0.4)';
+      ctx.strokeStyle = '#2563eb';
+      ctx.lineWidth = 8;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + r * Math.cos(userRad), cy - r * Math.sin(userRad));
+      ctx.stroke();
+      
+      ctx.fillStyle = '#1e40af'; ctx.shadowBlur = 0;
+      ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fill();
+    }
+
+    function snapAngle(x, y) {
+      const dx = x - 180;
+      const dy = 180 - y;
+      let deg = Math.atan2(dy, dx) * 180 / Math.PI;
+      if (deg < 0) deg += 360;
+      return specialAngles.reduce((prev, curr) => Math.abs(curr - deg) < Math.abs(prev - deg) ? curr : prev);
+    }
+
+    function handleInput(e) {
+      if (state.mode !== 'play') return;
+      const canvas = document.getElementById('angleCanvas');
+      const rect = canvas.getBoundingClientRect();
+      const t = e.touches ? e.touches[0] : e;
+      state.userAngle = snapAngle(t.clientX - rect.left, t.clientY - rect.top);
+      drawCircle();
+    }
+
+    function checkAnswer() {
+      // 同界角判定：((user - target) % 360) === 0
+      const isCorrect = (state.userAngle - state.targetAngle) % 360 === 0;
+      
+      if (isCorrect) {
+        state.totalProblems++;
+        state.combo++;
+        state.perfectCorrect++;
+        if (state.combo > state.maxCombo) state.maxCombo = state.combo;
+
+        let earn = 1 + (0.1 * (state.combo - 1));
+        if (state.combo % 3 === 0) earn += 0.01 * Math.pow(2, (state.combo / 3) - 1);
+        state.score += earn;
+
+        state.isCorrectFlash = true;
+        render();
+        fetch(`${SCRIPT_URL}?action=save&type=Angle&studentName=${encodeURIComponent(state.name)}&problem=${state.targetAngle}&isCorrect=true&score=${earn}&combo=${state.combo}`, { mode: 'no-cors' });
+        
+        setTimeout(() => {
+          state.isCorrectFlash = false;
+          nextProblem();
+        }, 300);
+      } else {
+        state.combo = 0;
+        render();
+      }
+    }
+
+    function nextProblem() {
+      const pool = [...specialAngles, ...specialAngles.map(a => a - 360)];
+      let newTarget;
+      
+      // 防重複機制：如果抽到跟上次一樣的角度，就重抽
+      do {
+        newTarget = pool[Math.floor(Math.random() * pool.length)];
+      } while (newTarget === state.lastAngle);
+      
+      state.targetAngle = newTarget;
+      state.lastAngle = newTarget; // 更新最後一次題目紀錄
+      state.startTime = Date.now();
+      state.userAngle = 0;
+      render();
+    }
+
+    function startTimer() {
+      timer = setInterval(() => {
+        state.timeLeft--;
+        if (state.timeLeft <= 0) {
+          clearInterval(timer);
+          state.mode = 'end';
+          state.accuracy = state.totalProblems > 0 ? ((state.perfectCorrect / state.totalProblems) * 100).toFixed(1) : "0.0";
+          fetch(`${SCRIPT_URL}?action=saveSummary&type=Angle&studentName=${encodeURIComponent(state.name)}&score=${state.score.toFixed(2)}&maxCombo=${state.maxCombo}`, { mode: 'no-cors' });
+        }
+        render();
+      }, 1000);
+    }
+
+    // 統一事件管理
+    const onStart = (e) => { if(state.mode === 'play') { state.isDown = true; handleInput(e); } };
+    const onMove = (e) => { if(state.isDown) { e.preventDefault(); handleInput(e); } };
+    const onEnd = () => { if(state.isDown) { state.isDown = false; checkAnswer(); } };
+
+    window.addEventListener('mousedown', onStart);
+    window.addEventListener('touchstart', onStart, {passive: false});
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('touchmove', onMove, {passive: false});
+    window.addEventListener('mouseup', onEnd);
+    window.addEventListener('touchend', onEnd);
+
+    nextProblem();
+    startTimer();
+  </script>
+</body>
+</html>
