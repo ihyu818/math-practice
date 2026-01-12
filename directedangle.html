@@ -135,8 +135,20 @@
       const dy = 180 - y;
       let deg = Math.atan2(dy, dx) * 180 / Math.PI;
       if (deg < 0) deg += 360;
-      return specialAngles.reduce((prev, curr) => Math.abs(curr - deg) < Math.abs(prev - deg) ? curr : prev);
+
+      // 修正邏輯：考慮到 360 度與 0 度是重合的
+      return specialAngles.reduce((prev, curr) => {
+        // 計算當前角度與目標的最小夾角距離
+        const getDist = (a, b) => {
+          const d = Math.abs(a - b) % 360;
+          return d > 180 ? 360 - d : d;
+        };
+
+        return getDist(curr, deg) < getDist(prev, deg) ? curr : prev;
+      });
     }
+
+
 
     function handleInput(e) {
       if (state.mode !== 'play') return;
@@ -213,8 +225,15 @@
     const onMove = (e) => { if(state.isDown) { e.preventDefault(); handleInput(e); } };
     const onEnd = (e) => { 
       if (state.isDown) { 
-        // 阻止瀏覽器在觸發 touchend 後又去觸發 mouseup
-        if (e.cancelable) e.preventDefault(); 
+        // 1. 如果是拖曳結束，最後一次抓取當前手指放開的位置
+        if (e.changedTouches && e.changedTouches.length > 0) {
+          handleInput(e.changedTouches[0]);
+        } else if (e.clientX !== undefined) {
+          handleInput(e);
+        }
+
+        // 2. 阻止虛擬事件
+        if (e && e.cancelable) e.preventDefault(); 
         
         state.isDown = false; 
         checkAnswer(); 
