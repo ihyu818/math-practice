@@ -150,7 +150,7 @@
     function checkAnswer() {
       // 如果已經在閃爍（代表剛答對），就直接跳出，不重複計算
       if (state.isCorrectFlash || state.userAngle === null) return;
-      
+
       // 同界角判定：((user - target) % 360) === 0
       const isCorrect = (state.userAngle - state.targetAngle) % 360 === 0;
       
@@ -180,7 +180,7 @@
 
     function nextProblem() {
       // const pool = [...specialAngles, ...specialAngles.map(a => a - 360)];
-      const pool = specialAngles
+      const pool = specialAngles;
       let newTarget;
       
       // 防重複機制：如果抽到跟上次一樣的角度，就重抽
@@ -211,9 +211,6 @@
     // 統一事件管理
     const onStart = (e) => { if(state.mode === 'play') { state.isDown = true; handleInput(e); } };
     const onMove = (e) => { if(state.isDown) { e.preventDefault(); handleInput(e); } };
-    const onEnd = () => { if(state.isDown) { state.isDown = false; checkAnswer(); } };
-
-
     const onEnd = (e) => { 
       if (state.isDown) { 
         // 阻止瀏覽器在觸發 touchend 後又去觸發 mouseup
