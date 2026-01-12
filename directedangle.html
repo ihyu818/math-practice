@@ -172,7 +172,9 @@
     }
 
     function nextProblem() {
-      const pool = [...specialAngles, ...specialAngles.map(a => a - 360)];
+      // const pool = [...specialAngles, ...specialAngles.map(a => a - 360)];
+      const pool = specialAngles
+      let newTarget;
       let newTarget;
       
       // 防重複機制：如果抽到跟上次一樣的角度，就重抽
