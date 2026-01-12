@@ -57,7 +57,9 @@
     const TOTAL_TIME = 120;
 
     let state = {
-      mode: 'login', name: '', problem: null, 
+      mode: 'play', // 直接進入遊戲
+      name: localStorage.getItem('math_lab_name') || 'Guest', 
+      problem: null, 
       userInputs: ["", "", "", ""], currentSlot: 0, 
       isAnswerCorrect: false, score: 0, combo: 0, maxCombo: 0, timeLeft: TOTAL_TIME,
       hasUsedBack: false
@@ -67,20 +69,12 @@
 
     function render() {
       const app = document.getElementById('app');
+      if (state.mode === 'play' && !state.problem) return;
       if (state.mode === 'login') {
-        app.innerHTML = `<div class="min-h-screen flex flex-col items-center justify-start p-4 pt-8 text-center max-w-md mx-auto">
-          <div class="bg-white p-6 rounded-3xl shadow-xl w-full border-t-8 border-pink-600 mb-6">
-            <h1 class="text-2xl font-black mb-4 italic uppercase text-pink-900 leading-tight">Factorization<br>Laboratory</h1>
-            <input type="text" id="nameInput" maxlength="12" class="w-full px-4 py-3 border-2 rounded-2xl mb-4 text-center font-bold text-xl" placeholder="您的姓名" value="${state.name}">
-            <button onclick="handleStart(event)" class="w-full bg-pink-600 text-white py-3 rounded-2xl font-black shadow-lg uppercase tracking-widest text-lg">ENTER LAB</button>
-          </div>
-          <iframe src="${LEADERBOARD_URL}&cachebust=${Date.now()}" class="w-full h-60 border-none rounded-2xl shadow-sm"></iframe>
-        </div>`;
-        const ni = document.getElementById('nameInput');
-        ni.oninput = (e) => { state.name = e.target.value; };
-        ni.onkeydown = (e) => { if(e.key === 'Enter') handleStart(e); };
-        ni.focus();
-      } 
+        state.mode = 'play';
+        handleStart(); // 啟動遊戲邏輯
+        return;
+      }
       else if (state.mode === 'play') {
         const timePercent = (state.timeLeft / TOTAL_TIME) * 100;
         app.innerHTML = `
@@ -147,13 +141,36 @@
         state.userInputs[state.currentSlot] = "";
       } 
       else if (key === 'next') {
-        // 【修正點】：檢查符號位是否為空。如果是第 0 或 2 格（符號位），禁止直接按 Next 跳過
-        if ((state.currentSlot === 0 || state.currentSlot === 2) && state.userInputs[state.currentSlot] === "") {
-            return; // 什麼都不做，強迫輸入符號
+        const currentVal = state.userInputs[state.currentSlot];
+        
+        // 只有在當前格子為空時，才判斷是否允許「自動補位」
+        if (currentVal === "") {
+          const targetA = state.problem.ansA;
+          const targetB = state.problem.ansB;
+
+          // 判斷當前格子對應的正確數值是否為 0
+          let canSkip = false;
+          if (state.currentSlot <= 1) { // 第一對括號 (x + 0)
+            if (targetA === 0 || targetB === 0) canSkip = true;
+          } else { // 第二對括號 (x + 0)
+            if (targetA === 0 || targetB === 0) canSkip = true;
+          }
+
+          if (canSkip) {
+            // 如果答案確實包含 0，才允許補位
+            state.userInputs[state.currentSlot] = (state.currentSlot % 2 === 0) ? "+" : "0";
+          } else {
+            // 如果答案不是 0，按 Next 不准補位，直接跳過不處理
+            return; 
+          }
         }
-        if (state.currentSlot < 3) state.currentSlot++;
-        checkAnswer(true); 
-      } 
+        
+        if (state.currentSlot < 3) {
+          state.currentSlot++;
+        } else {
+          checkAnswer(true); 
+        }
+      }
       else {
         if (state.currentSlot % 2 === 0) { // 符號格
           if (key === '+' || key === '-') {
@@ -173,13 +190,32 @@
     }
 
     // (其餘核心邏輯保持不變，略作縮減以符合長度)
-    function handleStart(e) { if(e) { e.preventDefault(); e.stopPropagation(); } if (state.name.trim()) { state.mode = 'play'; state.currentSlot = 0; nextProblem(); if (timer) clearInterval(timer); timer = setInterval(() => { state.timeLeft--; if (state.timeLeft <= 0) endGame(); else { const bar = document.getElementById('timer-bar'); if(bar) bar.style.width = (state.timeLeft/TOTAL_TIME*100)+'%'; } }, 1000); } }
+    function handleStart(e) { 
+      if(e) { e.preventDefault(); e.stopPropagation(); } 
+      state.mode = 'play'; 
+      state.currentSlot = 0; 
+      nextProblem(); 
+      if (timer) clearInterval(timer); 
+      timer = setInterval(() => { 
+        state.timeLeft--; 
+        if (state.timeLeft <= 0) {
+            endGame(); 
+        } else { 
+            const bar = document.getElementById('timer-bar'); 
+            if(bar) bar.style.width = (state.timeLeft/TOTAL_TIME*100)+'%'; 
+            // 這裡不需要每次都 render()，節省效能，只需更新進度條
+        } 
+      }, 1000); 
+    }
     function nextProblem() { const a = Math.floor(Math.random()*19)-9, b = Math.floor(Math.random()*19)-9; const B = a+b, C = a*b; let bT = B===0?"":(B===1?"+ x":(B===-1?"- x":(B>0?"+ "+B+"x":"- "+Math.abs(B)+"x"))); let cT = C===0?"":(C>0?"+ "+C:"- "+Math.abs(C)); state.problem = { display: `x² ${bT} ${cT}`, ansA: a, ansB: b, start: Date.now() }; state.userInputs = ["", "", "", ""]; state.currentSlot = 0; state.isAnswerCorrect = false; state.hasUsedBack = false; render(); }
     function checkAnswer(f) { const v1 = parseInt((state.userInputs[0]||"+")+(state.userInputs[1]||"0")), v2 = parseInt((state.userInputs[2]||"+")+(state.userInputs[3]||"0")); const t1 = state.problem.ansA, t2 = state.problem.ansB; if (((v1===t1 && v2===t2) || (v1===t2 && v2===t1)) && f) handleCorrect(v1, v2); }
     function handleCorrect(v1,v2) { state.isAnswerCorrect = true; const ts = (Date.now()-state.problem.start)/1000; if (state.hasUsedBack) state.combo = 0; else state.combo++; if (state.combo>state.maxCombo) state.maxCombo = state.combo; let earn = state.combo > 0 ? (1+(0.1*(state.combo-1))) : 1; state.score += earn; render(); fetch(`${SCRIPT_URL}?action=save&type=Factor&studentName=${encodeURIComponent(state.name)}&problem=${encodeURIComponent(state.problem.display)}&correctAnswer=${state.problem.ansA},${state.problem.ansB}&userAnswer=${v1},${v2}&isCorrect=true&timeSpent=${ts}&score=${earn.toFixed(4)}&combo=${state.combo}`, { mode: 'no-cors' }); setTimeout(nextProblem, 300); }
     function endGame() { clearInterval(timer); state.mode = 'end'; render(); fetch(`${SCRIPT_URL}?action=saveSummary&type=Factor&studentName=${encodeURIComponent(state.name)}&score=${state.score.toFixed(2)}&maxCombo=${state.maxCombo}`, { mode: 'no-cors' }); }
     window.onkeydown = (e) => { if (state.mode === 'play') { if (e.key >= '0' && e.key <= '9' || e.key === '+' || e.key === '-') pressKey(e.key); else if (e.key === 'Backspace' || e.key === 'ArrowLeft') { e.preventDefault(); pressKey('back'); } else if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowRight') { e.preventDefault(); pressKey('next'); } } };
-    render();
+
+    window.onload = () => {
+      handleStart();
+    };
   </script>
 </body>
 </html>
