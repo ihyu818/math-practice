@@ -1,0 +1,38 @@
+/**
+ * MathKeyboard 模組：統一處理實體鍵盤與虛擬鍵盤輸入
+ * @param {Function} pressKeyCallback - 傳入你原本的 pressKey 函數
+ */
+const MathKeyboard = (pressKeyCallback) => {
+  // 1. 處理實體鍵盤 (桌機/Notebook)
+  window.onkeydown = (e) => {
+    // 遊戲結束或正在閃爍時不反應
+    if (state.mode !== 'play' || state.isAnswerCorrect) return;
+
+    if ((e.key >= '0' && e.key <= '9') || e.key === '+' || e.key === '-') {
+      pressKeyCallback(e.key);
+    } 
+    else if (e.key === '/') {
+      pressKeyCallback('/'); // 指數運算會用到
+    }
+    else if (e.key === 'Backspace') {
+      e.preventDefault();
+      pressKeyCallback('back');
+    }
+    else if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowRight' || e.key === 'Tab') {
+      e.preventDefault();
+      pressKeyCallback('next');
+    }
+    else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      // 特殊邏輯：回到上一格
+      if (state.currentSlot > 0) {
+        state.currentSlot--;
+        render();
+      }
+    }
+  };
+
+  // 2. 處理虛擬按鈕點擊 (手機/平板/滑鼠)
+  // 提示：HTML 上的 onclick="pressKey('7')" 依然有效
+  // 但我們可以在此處加入防抖動或全域優化
+};
