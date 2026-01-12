@@ -27,7 +27,8 @@
       name: localStorage.getItem('math_lab_name') || 'Guest',
       targetAngle: null,
       lastAngle: null, // 用於防重複
-      userAngle: 0,
+      userAngle: null, 
+      isDown: false
       startTime: 0,
       score: 0, combo: 0, maxCombo: 0, timeLeft: TOTAL_TIME,
       totalProblems: 0, perfectCorrect: 0,
@@ -110,6 +111,7 @@
       });
 
       // 繪製主指針
+    if (state.userAngle !== null) { // 只有非空值才畫
       const userRad = state.userAngle * Math.PI / 180;
       ctx.setLineDash([]);
       ctx.shadowBlur = 15;
@@ -121,10 +123,11 @@
       ctx.moveTo(cx, cy);
       ctx.lineTo(cx + r * Math.cos(userRad), cy - r * Math.sin(userRad));
       ctx.stroke();
-      
+    }
+      //圓心永遠畫出來，代表原點
       ctx.fillStyle = '#1e40af'; ctx.shadowBlur = 0;
       ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fill();
-    }
+
 
     function snapAngle(x, y) {
       const dx = x - 180;
@@ -175,7 +178,6 @@
       // const pool = [...specialAngles, ...specialAngles.map(a => a - 360)];
       const pool = specialAngles
       let newTarget;
-      let newTarget;
       
       // 防重複機制：如果抽到跟上次一樣的角度，就重抽
       do {
@@ -185,7 +187,7 @@
       state.targetAngle = newTarget;
       state.lastAngle = newTarget; // 更新最後一次題目紀錄
       state.startTime = Date.now();
-      state.userAngle = 0;
+      state.userAngle = null;
       render();
     }
 
