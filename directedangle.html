@@ -148,6 +148,9 @@
     }
 
     function checkAnswer() {
+      // 如果已經在閃爍（代表剛答對），就直接跳出，不重複計算
+      if (state.isCorrectFlash || state.userAngle === null) return;
+      
       // 同界角判定：((user - target) % 360) === 0
       const isCorrect = (state.userAngle - state.targetAngle) % 360 === 0;
       
@@ -209,6 +212,17 @@
     const onStart = (e) => { if(state.mode === 'play') { state.isDown = true; handleInput(e); } };
     const onMove = (e) => { if(state.isDown) { e.preventDefault(); handleInput(e); } };
     const onEnd = () => { if(state.isDown) { state.isDown = false; checkAnswer(); } };
+
+
+    const onEnd = (e) => { 
+      if (state.isDown) { 
+        // 阻止瀏覽器在觸發 touchend 後又去觸發 mouseup
+        if (e.cancelable) e.preventDefault(); 
+        
+        state.isDown = false; 
+        checkAnswer(); 
+      } 
+    };
 
     window.addEventListener('mousedown', onStart);
     window.addEventListener('touchstart', onStart, {passive: false});
