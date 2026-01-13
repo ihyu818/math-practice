@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>實驗室模板 - Math Lab</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { --fluid-text: clamp(1.5rem, 8vw, 3rem); --fluid-slot: clamp(2rem, 10vw, 4rem); }
+    body { background-color: #f8fafc; touch-action: manipulation; overflow-x: hidden; }
+    /* 按鍵樣式 */
+    .key-btn { 
+      display: flex; align-items: center; justify-content: center; 
+      background-color: white; border: 1px solid #e5e7eb; border-radius: 0.75rem; 
+      font-weight: bold; font-size: 1.2rem; height: 55px; cursor: pointer; 
+      user-select: none; -webkit-tap-highlight-color: transparent;
+    }
+    .key-btn:active { background-color: #f1f5f9; transform: scale(0.95); }
+    .key-btn-op { background-color: #f8fafc; color: #3b82f6; border-color: #dbeafe; }
+    .key-btn-next { background-color: #3b82f6; color: white; border-color: #2563eb; font-style: italic; }
+    /* 輸入框樣式 */
+    .slot { 
+      border-bottom: 3px solid #cbd5e1; min-width: var(--fluid-slot); 
+      height: 50px; display: inline-flex; align-items: center; justify-content: center; 
+      font-weight: 800; font-size: var(--fluid-text); transition: all 0.2s; 
+    }
+    .slot.active { border-color: #3b82f6; background-color: #eff6ff; }
+    .correct-flash { animation: flash 0.3s ease-out; }
+    @keyframes flash { 0% { background-color: transparent; } 50% { background-color: #d1fae5; } 100% { background-color: transparent; } }
+    #timer-bar { transition: width 1s linear; }
+  </style>
+</head>
+<body class="text-slate-800 font-sans">
+  <div id="app"></div>
+
+  <script>
+    // --- 核心配置 ---
+    const SCRIPT_URL = '你的_GOOGLE_SCRIPT_網址'; // [需修改]
+    const GAME_TYPE = 'Template'; // [需修改] 傳送到 Google Sheet 的遊戲名稱
+    const TOTAL_TIME = 120;
+
+    // --- 共用模組 1: Session & Identity ---
+    function generateSessionId() {
+      return Math.random().toString(36).substring(2, 12).toUpperCase() + 
+             Math.random().toString(36).substring(2, 12).toUpperCase();
+    }
+
+    let state = {
+      mode: 'play',
+      name: localStorage.getItem('math_lab_name') || 'Guest',
+      sessionId: generateSessionId(),
+      problem: null,
+      userInputs: ["", ""], // [根據需求修改數量]
+      currentSlot: 0,
+      score: 0, combo: 0, maxCombo: 0, 
+      timeLeft: TOTAL_TIME,
+      isAnswerCorrect: false,
+      hasUsedBack: false,
+      totalProblems: 0
+    };
+
+    let timer = null;
+
+    // --- 共用模組 2: Scoring System ---
+    const ScoreSystem = {
+      calculateEarn: (combo, hasUsedBack) => {
+        if (hasUsedBack) return 1.0;
+        let earn = 1 + (0.1 * (combo - 1));
+        if (combo % 3 === 0) earn += 0.01 * Math.pow(2, (combo / 3) - 1);
+        return earn;
+      },
+      saveLog: (earn, ts, problemInfo) => {
+        const params = new URLSearchParams({
+          action: 'save',
+          type: GAME_TYPE,
+          sessionId: state.sessionId,
+          studentName: state.name,
+          problem: problemInfo.display,
+          correctAnswer: problemInfo.ans,
+          userAnswer: problemInfo.userAns,
+          isCorrect: 'true',
+          timeSpent: ts.toFixed(2),
+          score: earn.toFixed(4),
+          combo: state.combo
+        });
+        fetch(`${SCRIPT_URL}?${params.toString()}`, { mode: 'no-cors' });
+      }
+    };
+
+    // --- 遊戲邏輯 (需根據各遊戲客製化) ---
+
+    // [需修改] 產生題目邏輯
+    function generateProblem() {
+      // 這裡寫你的隨機題目產生程式
+      return { 
+        display: "1 + 1", // 畫面顯示
+        ans: "2",         // 標準答案
+        start: Date.now() 
+      };
+    }
+
+    // [需修改] 判定答案邏輯
+    function checkAnswer() {
+      const userAns = state.userInputs.join(""); // 根據 Slot 規則組合答案
+      if (userAns === state.problem.ans) {
+        state.isAnswerCorrect = true;
+        state.totalProblems++;
+        
+        if (state.hasUsedBack) state.combo = 0;
+        else {
+          state.combo++;
+          if (state.combo > state.maxCombo) state.maxCombo = state.combo;
+        }
+
+        const ts = (Date.now() - state.problem.start) / 1000;
+        const earn = ScoreSystem.calculateEarn(state.combo, state.hasUsedBack);
+        state.score += earn;
+
+        // 傳送單題紀錄
+        ScoreSystem.saveLog(earn, ts, {
+          display: state.problem.display,
+          ans: state.problem.ans,
+          userAns: userAns
+        });
+
+        render();
+        setTimeout(nextProblem, 400);
+      }
+    }
+
+    function nextProblem() {
+      state.problem = generateProblem();
+      state.userInputs = ["", ""]; // [需與 state 初始化一致]
+      state.currentSlot = 0;
+      state.isAnswerCorrect = false;
+      state.hasUsedBack = false;
+      render();
+    }
+
+    // --- UI 渲染 ---
+    function render() {
+      const app = document.getElementById('app');
+      if (state.mode === 'play' && !state.problem) return;
+
+      if (state.mode === 'play') {
+        const timePercent = (state.timeLeft / TOTAL_TIME) * 100;
+        app.innerHTML = `
+          <div class="min-h-screen p-4 flex flex-col items-center max-w-xl mx-auto ${state.isAnswerCorrect ? 'correct-flash' : ''}">
+            <div class="w-full bg-slate-200 h-2 rounded-full mb-4 overflow-hidden">
+              <div id="timer-bar" class="bg-blue-500 h-full" style="width: ${timePercent}%"></div>
+            </div>
+
+            <div class="w-full grid grid-cols-3 bg-white p-4 rounded-3xl shadow-sm mb-8 items-center text-center">
+              <div class="text-left truncate text-[10px] text-slate-300 font-bold uppercase">${state.name}</div>
+              <div><div class="text-[8px] text-slate-400 font-bold">SCORE</div><div class="text-2xl text-blue-600 font-black">${state.score.toFixed(1)}</div></div>
+              <div class="text-right"><div class="text-[8px] text-slate-400 font-bold">COMBO</div><div class="text-2xl font-black text-orange-500">${state.combo}</div></div>
+            </div>
+
+            <div class="text-center mb-10 h-24 flex flex-col justify-center">
+              <div class="font-black text-slate-800" style="font-size: var(--fluid-text)">${state.problem.display} = ?</div>
+            </div>
+
+            <div class="mb-10 flex gap-2">
+              <div class="slot ${state.currentSlot===0?'active':''}">${state.userInputs[0]}</div>
+              <div class="slot ${state.currentSlot===1?'active':''}">${state.userInputs[1]}</div>
+            </div>
+
+            <div class="w-full grid grid-cols-4 gap-2">
+              <div class="col-span-3 grid grid-cols-3 gap-2">
+                ${[7,8,9,4,5,6,1,2,3,0].map(n => `<div onclick="pressKey('${n}')" class="key-btn shadow-sm">${n}</div>`).join('')}
+                <div onclick="pressKey('+')" class="key-btn key-btn-op shadow-sm">+</div>
+                <div onclick="pressKey('-')" class="key-btn key-btn-op shadow-sm">-</div>
+              </div>
+              <div class="col-span-1 flex flex-col gap-2">
+                <div onclick="pressKey('back')" class="key-btn bg-red-50 text-red-500 shadow-sm flex-grow text-xl">⌫</div>
+                <div onclick="pressKey('next')" class="key-btn key-btn-next h-24 shadow-md text-lg font-black uppercase">Next</div>
+              </div>
+            </div>
+          </div>`;
+      } else if (state.mode === 'end') {
+        const accuracy = state.totalProblems > 0 ? ((state.score / state.totalProblems) * 100).toFixed(1) : 0;
+        app.innerHTML = `
+          <div class="min-h-screen flex items-center justify-center p-4">
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-sm text-center border-b-[12px] border-blue-600">
+              <h2 class="text-2xl font-black mb-1 text-slate-800 italic uppercase">Finished</h2>
+              <div class="text-6xl font-black text-blue-600 my-8">${state.score.toFixed(2)}</div>
+              <button onclick="location.reload()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg mb-4">Retry</button>
+              <button onclick="location.href='index.html'" class="w-full text-slate-400 font-bold uppercase tracking-widest text-sm">Main Menu</button>
+            </div>
+          </div>`;
+      }
+    }
+
+    // --- 輸入控制 ---
+    function pressKey(key) {
+      if (state.mode !== 'play' || state.isAnswerCorrect) return;
+
+      if (key === 'back') {
+        state.hasUsedBack = true;
+        if (state.userInputs[state.currentSlot] === "" && state.currentSlot > 0) state.currentSlot--;
+        state.userInputs[state.currentSlot] = "";
+      } 
+      else if (key === 'next') {
+        // 自動補位邏輯 (範例：如果為空補0，可依題目需求修改)
+        if (state.userInputs[state.currentSlot] === "") state.userInputs[state.currentSlot] = "0";
+        if (state.currentSlot < state.userInputs.length - 1) state.currentSlot++;
+        else checkAnswer();
+      } 
+      else {
+        state.userInputs[state.currentSlot] = key;
+        if (state.currentSlot < state.userInputs.length - 1) state.currentSlot++;
+        else checkAnswer();
+      }
+      render();
+    }
+
+    // --- 計時器與啟動 ---
+    function handleStart() {
+      state.problem = generateProblem();
+      timer = setInterval(() => {
+        state.timeLeft--;
+        if (state.timeLeft <= 0) endGame();
+        else render();
+      }, 1000);
+      render();
+    }
+
+    function endGame() {
+      if (timer) clearInterval(timer);
+      state.mode = 'end';
+      render();
+
+      const summary = new URLSearchParams({
+        action: 'saveSummary',
+        type: GAME_TYPE,
+        sessionId: state.sessionId,
+        studentName: state.name,
+        score: state.score.toFixed(2),
+        maxCombo: state.maxCombo,
+        totalCount: state.totalProblems,
+        accuracy: "100" // 簡化處理
+      });
+      fetch(`${SCRIPT_URL}?${summary.toString()}`, { mode: 'no-cors' });
+    }
+
+    // 鍵盤支援
+    window.onkeydown = (e) => {
+      if (state.mode !== 'play') return;
+      if (e.key >= '0' && e.key <= '9' || e.key === '+' || e.key === '-') pressKey(e.key);
+      else if (e.key === 'Backspace') { e.preventDefault(); pressKey('back'); }
+      else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pressKey('next'); }
+    };
+
+    window.onload = handleStart;
+  </script>
+</body>
+</html>
