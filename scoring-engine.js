@@ -17,15 +17,15 @@ const ScoringEngine = {
         state.maxCombo = state.combo;
       }
     }
-
     // 2. 計算加分 (套用三倍大獎勵公式)
     const earn = ScoringEngine.calculateEarn(state.combo, state.hasUsedBack);
-    
     // 3. 更新總分
     state.score += earn;
 
-    // 回傳本次得分，方便遊戲顯示 +1.21 之類的動畫或傳送 API
-    return earn;
+    // 將嘗試次數轉化為標籤：1次為 Perfect，其餘為次數數字
+    const status = (state.attempts === 1) ? "Perfect" : state.attempts.toString();
+    
+    return { earn, status };
   },
 
   /**
