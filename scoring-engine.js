@@ -1,0 +1,46 @@
+// scoring-engine.js
+const ScoringEngine = {
+  /**
+   * 當遊戲判斷「答對」時呼叫此函數
+   * @param {Object} state - 遊戲的狀態物件 (需包含 score, combo, maxCombo, hasUsedBack)
+   * @returns {number} - 傳回本次獲得的分數 (earn)
+   */
+  processCorrect: (state) => {
+    // 1. 處理 Combo 邏輯
+    // 只有在「沒動用 Backspace」的情況下才累計 Combo
+    if (state.hasUsedBack) {
+      state.combo = 0; 
+    } else {
+      state.combo++;
+      // 自動更新該場遊戲的最高連擊紀錄
+      if (state.combo > state.maxCombo) {
+        state.maxCombo = state.combo;
+      }
+    }
+
+    // 2. 計算加分 (套用三倍大獎勵公式)
+    const earn = ScoringEngine.calculateEarn(state.combo, state.hasUsedBack);
+    
+    // 3. 更新總分
+    state.score += earn;
+
+    // 回傳本次得分，方便遊戲顯示 +1.21 之類的動畫或傳送 API
+    return earn;
+  },
+
+  /**
+   * 單純的加分公式演算法
+   */
+  calculateEarn: (combo, hasUsedBack) => {
+    if (hasUsedBack) return 1.0; // 有修改過答案，固定只給 1 分
+    
+    // 基礎分 1 + 連擊加乘 (每多 1 combo + 0.1)
+    let earn = 1 + (0.1 * (combo - 1));
+    
+    // 每 3 連擊的指數大獎勵 (3, 6, 9...)
+    if (combo > 0 && combo % 3 === 0) {
+      earn += 0.01 * Math.pow(2, (combo / 3) - 1);
+    }
+    return earn;
+  }
+};
