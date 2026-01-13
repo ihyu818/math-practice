@@ -96,7 +96,8 @@
           userAnswer: problemInfo.userAns, isCorrect: 'true',
           timeSpent: ts.toFixed(2), score: earn.toFixed(2), combo: state.combo
         });
-        fetch(`${SCRIPT_URL}?${params.toString()}`, { mode: 'no-cors' });
+        /* fetch(`${SCRIPT_URL}?${params.toString()}`, { mode: 'no-cors' }); */
+        fetch(`${SCRIPT_URL}?action=save&type=Factor&sessionId=${state.sessionId}&studentName=${encodeURIComponent(state.name)}&problem=${encodeURIComponent(state.problem.display)}&correctAnswer=${state.problem.ansA},${state.problem.ansB}&userAnswer=${v1},${v2}&isCorrect=true&timeSpent=${ts}&score=${earn.toFixed(4)}&combo=${state.combo}`, { mode: 'no-cors' });
         return earn;
       }
     };
@@ -225,6 +226,18 @@
       MathKeyboard(pressKey);
     }
 
+    function endGame() {
+      if (timer) clearInterval(timer);
+      state.mode = 'end';
+      render();
+
+      // 計算統計數據
+      const accuracy = state.totalProblems > 0 ? ((state.perfectCorrect / state.totalProblems) * 100).toFixed(1) : "0.0";
+      
+      // 發送總結資料到 Google Sheets
+      fetch(`${SCRIPT_URL}?action=saveSummary&type=Square&sessionId=${state.sessionId}&studentName=${encodeURIComponent(state.name)}&score=${state.score.toFixed(2)}&maxCombo=${state.maxCombo}`, { mode: 'no-cors' });
+    }
+    
     window.onload = handleStart;
   </script>
 </body>
