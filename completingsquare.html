@@ -35,9 +35,15 @@
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5SPY0XNjPWaRAgSmSZx1cSgTTeuACaT17Lx96Oy0TkALO0mgOKA-mr3KuUtFCNVir2Q/exec'; 
     const TOTAL_TIME = 120;
 
+    function generateSessionId() {
+      return Math.random().toString(36).substring(2, 12).toUpperCase() + 
+             Math.random().toString(36).substring(2, 12).toUpperCase();
+    }
+    
     let state = {
       mode: 'play',
       name: localStorage.getItem('math_lab_name') || 'Guest',
+      sessionId: generateSessionId(), // 每一場遊戲都有唯一的 ID
       problem: null, 
       userInputs: ["", "", "", ""],
       currentSlot: 0,
