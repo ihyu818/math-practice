@@ -90,14 +90,9 @@
         const earn = ScoreSystem.calculateEarn(state.combo, state.hasUsedBack);
         state.score += earn;
 
-        const params = new URLSearchParams({
-          action: 'save', type: problemInfo.type, studentName: state.name,
-          problem: problemInfo.display, correctAnswer: problemInfo.ans,
-          userAnswer: problemInfo.userAns, isCorrect: 'true',
-          timeSpent: ts.toFixed(2), score: earn.toFixed(2), combo: state.combo
-        });
-        /* fetch(`${SCRIPT_URL}?${params.toString()}`, { mode: 'no-cors' }); */
-        fetch(`${SCRIPT_URL}?action=save&type=Factor&sessionId=${state.sessionId}&studentName=${encodeURIComponent(state.name)}&problem=${encodeURIComponent(state.problem.display)}&correctAnswer=${state.problem.ansA},${state.problem.ansB}&userAnswer=${v1},${v2}&isCorrect=true&timeSpent=${ts}&score=${earn.toFixed(4)}&combo=${state.combo}`, { mode: 'no-cors' });
+        // 統一傳送格式：包含 sessionId 與 type
+        fetch(`${SCRIPT_URL}?action=save&type=Square&sessionId=${state.sessionId}&studentName=${encodeURIComponent(state.name)}&problem=${encodeURIComponent(problemInfo.display)}&correctAnswer=${encodeURIComponent(problemInfo.ans)}&userAnswer=${encodeURIComponent(problemInfo.userAns)}&isCorrect=true&timeSpent=${ts.toFixed(2)}&score=${earn.toFixed(4)}&combo=${state.combo}`, { mode: 'no-cors' });
+        
         return earn;
       }
     };
@@ -219,8 +214,11 @@
       state.problem = generateProblem();
       timer = setInterval(() => {
         state.timeLeft--;
-        if (state.timeLeft <= 0) { clearInterval(timer); state.mode = 'end'; }
-        render();
+        if (state.timeLeft <= 0) { 
+          endGame(); // 呼叫獨立出來的結束函數
+        } else {
+          render();
+        }
       }, 1000);
       render();
       MathKeyboard(pressKey);
