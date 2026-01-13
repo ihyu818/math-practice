@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>因式分解實驗室</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@1,700&display=swap" rel="stylesheet">
+    
+    <script src="js/session-manager.js?v=2"></script>
+    <script src="js/scoring-engine.js?v=2"></script>
+    <script src="js/sync-protocol.js?v=2"></script>
+    <script src="js/math-keyboard.js?v=2"></script>
+
+    <style>
+        .math-font { font-family: 'Lora', serif; font-style: italic; }
+        .slot { width: 3rem; height: 3.5rem; border-bottom: 3px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; }
+        .slot.active { border-bottom-color: #ec4899; background-color: #fdf2f8; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col items-center p-4">
+
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-xl p-6 mt-6">
+        <div class="flex justify-between mb-6 font-bold text-slate-400 text-sm">
+            <span id="name-tag">---</span>
+            <span id="score-tag">SCORE: 0.00</span>
+        </div>
+
+        <div id="problem-display" class="text-4xl text-center math-font mb-8 h-12 text-slate-800"></div>
+
+        <div class="flex items-center justify-center space-x-1 text-2xl math-font mb-10">
+            <span>( x</span>
+            <div id="slot-0" class="slot"></div>
+            <div id="slot-1" class="slot"></div>
+            <span>)( x</span>
+            <div id="slot-2" class="slot"></div>
+            <div id="slot-3" class="slot"></div>
+            <span>)</span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2">
+            <button onclick="press('1')" class="bg-slate-100 py-4 rounded-xl font-bold active:bg-slate-200">1</button>
+            <button onclick="press('2')" class="bg-slate-100 py-4 rounded-xl font-bold active:bg-slate-200">2</button>
+            <button onclick="press('3')" class="bg-slate-100 py-4 rounded-xl font-bold active:bg-slate-200">3</button>
+            <button onclick="press('+')" class="bg-blue-50 py-4 rounded-xl font-bold text-blue-600">+</button>
+            <button onclick="press('0')" class="bg-slate-100 py-4 rounded-xl font-bold">0</button>
+            <button onclick="press('-')" class="bg-blue-50 py-4 rounded-xl font-bold text-blue-600">-</button>
+            <button onclick="press('back')" class="col-span-1 bg-red-50 py-4 rounded-xl font-bold text-red-600">←</button>
+            <button onclick="press('next')" class="col-span-2 bg-pink-500 py-4 rounded-xl font-bold text-white">Next / Enter</button>
+        </div>
+    </div>
+
+    <script>
+        const GAS_URL = "你的_GOOGLE_APPS_SCRIPT_URL";
+
+        const state = {
+            mode: 'play',
+            gameType: 'Factor',
+            sessionId: SessionManager.generateId(),
+            name: SessionManager.getName(),
+            score: 0,
+            combo: 0,
+            maxCombo: 0,
+            totalSolved: 0,
+            totalPerfect: 0,
+            attempts: 1,
+            isCorrecting: false,
+            currentSlot: 0,
+            userInputs: ["", "", "", ""],
+            canAutoFill: (s) => true // 允許 next 鍵自動填入 + 或 0
+        };
+
+        function press(key) {
+            MathKeyboard.handle(key, state, checkAnswer, render);
+        }
+
+        function newProblem() {
+            // 隨機生成題目邏輯 (此處為示意)
+            const a = 2, b = 3;
+            state.ansObj = { s1: "+", n1: "2", s2: "+", n3: "3" };
+            state.problemText = `x² + 5x + 6`;
+            
+            state.userInputs = ["", "", "", ""];
+            state.currentSlot = 0;
+            state.attempts = 1;
+            state.isCorrecting = false;
+            state.startTime = Date.now();
+            render();
+        }
+
+        function render() {
+            document.getElementById('name-tag').innerText = state.name;
+            document.getElementById('score-tag').innerText = `SCORE: ${state.score.toFixed(2)}`;
+            document.getElementById('problem-display').innerText = state.problemText;
+            for(let i=0; i<4; i++) {
+                const el = document.getElementById(`slot-${i}`);
+                el.innerText = state.userInputs[i];
+                el.className = `slot ${state.currentSlot === i ? 'active' : ''}`;
+            }
+        }
+
+        function checkAnswer() {
+            // 這裡寫你的比對邏輯，如果正確：
+            const timeSpent = (Date.now() - state.startTime) / 1000;
+            const result = ScoringEngine.processCorrect(state, timeSpent);
+            
+            SyncProtocol.saveLog(GAS_URL, state, {
+                problem: state.problemText,
+                ans: "(x+2)(x+3)",
+                userAns: state.userInputs.join(''),
+                status: result.status,
+                ts: timeSpent,
+                earn: result.earn,
+                keyLog: state.currentKeyLog.join(',')
+            });
+
+            newProblem();
+        }
+
+        // 初始化
+        MathKeyboard.init(state, checkAnswer, render);
+        newProblem();
+    </script>
+</body>
+</html>
