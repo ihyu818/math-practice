@@ -134,7 +134,12 @@
       if (name !== "" && name.length <= 16) {
         errorMsg.classList.add('hidden');
         localStorage.setItem('math_lab_name', name); 
-        window.location.href = url; 
+        // --- 關鍵修改：附加時間戳記 ---
+        // 這會強制瀏覽器每次點擊都抓取最新的 HTML 檔案
+        const version = new Date().getTime(); 
+        window.location.href = `${url}?v=${version}`; 
+        // ----------------------------
+            
       } else {
         errorMsg.classList.remove('hidden');
         nameInput.classList.add('border-red-500');
