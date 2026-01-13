@@ -121,6 +121,33 @@
   </main>
 
   <script>
+    async function forceUpdateIfNeeded() {
+        try {
+            // 1. 抓取遠端的 config.json，後面的 t= 是為了確保抓到的是 GitHub 最新版
+            const response = await fetch(`config.json?t=${Date.now()}`);
+            const remote = await response.json();
+            
+            // 2. 讀取手機本地存的版本號
+            const localVersion = localStorage.getItem('math_lab_version');
+    
+            // 3. 如果本地沒版本號，或是版本號跟遠端對不起來
+            if (localVersion && localVersion !== remote.version) {
+                localStorage.setItem('math_lab_version', remote.version);
+                // 4. 強制刷新頁面，這會繞過所有快取，重新下載整個 index.html
+                console.log("發現新版本，強制更新中...");
+                window.location.reload(true);
+            } else {
+                // 第一次進入或版本一致，存入目前版本
+                localStorage.setItem('math_lab_version', remote.version);
+            }
+        } catch (e) {
+            console.error("版本檢查失敗，繼續執行舊版", e);
+        }
+    }
+    
+    // 立即執行檢查
+    forceUpdateIfNeeded();
+    
     window.onload = () => {
       const savedName = localStorage.getItem('math_lab_name');
       if (savedName) document.getElementById('globalName').value = savedName;
