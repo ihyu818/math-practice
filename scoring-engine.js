@@ -83,4 +83,4 @@ const ScoringEngine = {
             return earn;
           }
         };
-* /
+*/
