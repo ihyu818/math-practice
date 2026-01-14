@@ -6,7 +6,6 @@
   <title>加減運算實驗室 - Math Lab</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="js/ui-header.js?v=20260114"></script>
-  <script src="js/ui-keyboard.js?v=20260114"></script> 
   <script src="js/ui-summary.js?v=20260114"></script>
   <style>
     :root { --fluid-text: clamp(2rem, 10vw, 4rem); --fluid-slot: clamp(2.5rem, 12vw, 5rem); }
@@ -117,6 +116,16 @@
                 </div>
                 </div>
 
+                <div class="side-keyboard w-full max-w-sm">
+                <div class="grid grid-cols-4 gap-3">
+                    <div class="col-span-3 grid grid-cols-3 gap-3">
+                    ${[7,8,9,4,5,6,1,2,3].map(n => `<div onclick="pressKey('${n}')" class="key-btn">${n}</div>`).join('')}
+                    <div onclick="pressKey('-')" class="key-btn key-btn-op">-</div>
+                    <div onclick="pressKey('0')" class="key-btn col-span-2">0</div>
+                    </div>
+                    <div onclick="pressKey('back')" class="col-span-1 key-btn key-btn-back">⌫</div>
+                </div>
+                </div>
 
 
 
@@ -126,9 +135,6 @@
             </div>`;
 
         UIHeader.render('header-area', state);
-        // 新增這一行來畫出鍵盤
-        // 參數說明：容器ID, 要執行的函數, 鍵盤種類
-        UIKeyboard.render('keyboard-area', pressKey, 'numeric');
     }
         }
 
@@ -221,13 +227,3 @@
 
 
 
-                <div class="side-keyboard w-full max-w-sm">
-                <div class="grid grid-cols-4 gap-3">
-                    <div class="col-span-3 grid grid-cols-3 gap-3">
-                    ${[7,8,9,4,5,6,1,2,3].map(n => `<div onclick="pressKey('${n}')" class="key-btn">${n}</div>`).join('')}
-                    <div onclick="pressKey('-')" class="key-btn key-btn-op">-</div>
-                    <div onclick="pressKey('0')" class="key-btn col-span-2">0</div>
-                    </div>
-                    <div onclick="pressKey('back')" class="col-span-1 key-btn key-btn-back">⌫</div>
-                </div>
-                </div>
