@@ -26,12 +26,11 @@ const UIKeyboard = {
         </div>
       </div>
 
-      <div class="col-span-1 flex flex-col gap-2">
+      <div class="col-span-1">
         <div onclick="window.gamePress('back')" 
-             class="flex items-center justify-center bg-red-50 text-red-500 rounded-xl font-bold h-14 shadow-sm active:scale-95 cursor-pointer select-none">⌫</div>
-        <div onclick="window.gamePress('next')" 
-             class="flex items-center justify-center text-white rounded-xl font-black italic uppercase text-lg shadow-lg flex-grow active:scale-95 cursor-pointer select-none"
-             style="background-color: var(--theme-color)">Next</div>
+             class="w-full h-full min-h-[12.5rem] flex items-center justify-center bg-red-50 text-red-500 border border-red-100 rounded-xl font-bold text-2xl shadow-sm active:scale-95 cursor-pointer select-none">
+             ⌫
+        </div>
       </div>
     `;
     
@@ -68,4 +67,15 @@ const UIKeyboard = {
     window.gamePress = onPress;
   }
 };
+*/
+
+/*
+      <div class="col-span-1 flex flex-col gap-2">
+        <div onclick="window.gamePress('back')" 
+             class="flex items-center justify-center bg-red-50 text-red-500 rounded-xl font-bold h-14 shadow-sm active:scale-95 cursor-pointer select-none">⌫</div>
+        <div onclick="window.gamePress('next')" 
+             class="flex items-center justify-center text-white rounded-xl font-black italic uppercase text-lg shadow-lg flex-grow active:scale-95 cursor-pointer select-none"
+             style="background-color: var(--theme-color)">Next</div>
+      </div>
+
 */
