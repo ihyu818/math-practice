@@ -89,9 +89,11 @@
 
     function pressKey(key) {
       if (state.isAnswerCorrect || state.mode === 'end') return;
+      /*
       if (key === 'back') { state.userInput = state.userInput.slice(0, -1); state.hasModified = true; }
       else if (key === '-') { if (state.userInput === "") state.userInput = "-"; }
       else { if (state.userInput.length < 7) state.userInput += key; }
+      */
       checkAnswer(); render();
     }
 
