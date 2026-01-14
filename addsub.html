@@ -116,19 +116,20 @@
                     <div class="slot active theme-dark">${state.userInput}</div>
                 </div>
                 </div>
-                <div class="side-keyboard w-full max-w-sm">
-                <div class="grid grid-cols-4 gap-3">
-                    <div class="col-span-3 grid grid-cols-3 gap-3">
-                    ${[7,8,9,4,5,6,1,2,3].map(n => `<div onclick="pressKey('${n}')" class="key-btn">${n}</div>`).join('')}
-                    <div onclick="pressKey('-')" class="key-btn key-btn-op">-</div>
-                    <div onclick="pressKey('0')" class="key-btn col-span-2">0</div>
-                    </div>
-                    <div onclick="pressKey('back')" class="col-span-1 key-btn key-btn-back">⌫</div>
-                </div>
-                </div>
+
+
+
+
+
+
+                
             </div>`;
 
         UIHeader.render('header-area', state);
+        // 新增這一行來畫出鍵盤
+        // 參數說明：容器ID, 要執行的函數, 鍵盤種類
+        UIKeyboard.render('keyboard-area', pressKey, 'numeric');
+    }
         }
 
     function pressKey(key) {
@@ -217,3 +218,16 @@
   </script>
 </body>
 </html>
+
+
+
+                <div class="side-keyboard w-full max-w-sm">
+                <div class="grid grid-cols-4 gap-3">
+                    <div class="col-span-3 grid grid-cols-3 gap-3">
+                    ${[7,8,9,4,5,6,1,2,3].map(n => `<div onclick="pressKey('${n}')" class="key-btn">${n}</div>`).join('')}
+                    <div onclick="pressKey('-')" class="key-btn key-btn-op">-</div>
+                    <div onclick="pressKey('0')" class="key-btn col-span-2">0</div>
+                    </div>
+                    <div onclick="pressKey('back')" class="col-span-1 key-btn key-btn-back">⌫</div>
+                </div>
+                </div>
