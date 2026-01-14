@@ -146,6 +146,7 @@
       const nameInput = document.getElementById('globalName');
       const errorMsg = document.getElementById('errorMsg');
       const name = nameInput.value.trim();
+      const symbol = encodeURIComponent(btn.innerText.trim() || "MATH");
       
       if (name !== "" && name.length <= 16) {
         errorMsg.classList.add('hidden');
@@ -153,7 +154,7 @@
         // --- 關鍵修改：附加時間戳記 ---
         // 這會強制瀏覽器每次點擊都抓取最新的 HTML 檔案
         const version = new Date().getTime(); 
-        window.location.href = `${url}?v=${version}`; 
+        window.location.href = `${url}?v=${version}&c1=${c1}&c2=${c2}&s=${symbol}`;
         // ----------------------------
             
       } else {
