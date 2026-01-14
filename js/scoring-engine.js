@@ -1,4 +1,9 @@
 const ScoringEngine = {
+// --- 1. 新增：統一判定「是否為修正行為」的方法 ---
+  isCorrection: (key, currentInput) => {
+    // 規則：只有在格子裡有東西時按 Backspace，才算真正的修正
+    return key === 'back' && currentInput !== "";
+  },
   // 當答對時呼叫，傳入 state 與該題耗時(秒)
   processCorrect: (state, timeSpent) => {
     if (!state.stats) state.stats = { perfectTime: 0, correctedTime: 0, totalTime: 0 };
