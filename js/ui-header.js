@@ -18,7 +18,7 @@ const UIHeader = {
     container.innerHTML = `
       <div class="w-full bg-gray-200 h-1.5 rounded-full mb-4 overflow-hidden">
         <div id="timer-bar" class="h-full transition-all duration-500" 
-             style="width: ${timePercent}%; background-color: var(--theme-color); filter: brightness(0.8);"></div>
+             style="width: ${timePercent}%; background-color: var(--theme-color); filter: brightness(0.85) saturate(1.8);"></div>
       </div>
       <div class="w-full grid grid-cols-3 items-center mb-6 px-1">
         <div class="text-left">
@@ -27,7 +27,7 @@ const UIHeader = {
         </div>
         <div class="text-center">
           <div class="text-[9px] text-slate-400 uppercase font-bold">Score</div>
-          <div class="text-2xl font-black" style="color: var(--theme-color); filter: brightness(0.8);">${state.score.toFixed(1)}</div>
+          <div class="text-2xl font-black" style="color: var(--theme-color); filter: brightness(0.85) saturate(1.8);">${state.score.toFixed(1)}</div>
         </div>
         <div class="text-right">
           <div class="text-[9px] text-slate-400 uppercase font-bold">Combo</div>
