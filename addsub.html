@@ -141,6 +141,13 @@
       const op = Math.random() > 0.5 ? '+' : '-';
       state.problem = { display: `${a} ${op} (${b})`, ans: op === '+' ? (a + b) : (a - b), start: Date.now() };
       state.userInput = ""; state.isAnswerCorrect = false; state.hasModified = false; render();
+
+      state.userInput = "";
+      state.hasModified = false;
+      state.attempts = 1;
+      state.isCorrectingMode = false; // 關鍵：重置修正鎖
+      state.isAnswerCorrect = false;
+      render();
     }
 
     function startTimer() {
