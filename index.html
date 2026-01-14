@@ -142,6 +142,50 @@
       if (savedName) document.getElementById('globalName').value = savedName;
     };
 
+
+
+  function goToGame(url) {
+      const nameInput = document.getElementById('globalName');
+      const errorMsg = document.getElementById('errorMsg');
+      const name = nameInput.value.trim();
+      
+      if (name !== "" && name.length <= 16) {
+        errorMsg.classList.add('hidden');
+        localStorage.setItem('math_lab_name', name); 
+
+        // --- 1. 定義當前點擊的按鈕 (解決 btn 未定義問題) ---
+        const btn = event.currentTarget;
+        
+        // --- 2. 抓取顏色 (解決 c1, c2 未定義問題) ---
+        const style = window.getComputedStyle(btn);
+        const rgbToHex = (rgb) => {
+          if (!rgb) return '#3b82f6';
+          const res = rgb.match(/\d+/g);
+          return res ? "#" + res.map(x => parseInt(x).toString(16).padStart(2, '0')).join('') : '#3b82f6';
+        };
+        const c1 = encodeURIComponent(rgbToHex(style.backgroundColor));
+        const c2 = encodeURIComponent(rgbToHex(style.color));
+
+        // --- 3. 抓取符號 (注意：如果按鈕裡是 SVG，innerText 會是空的) ---
+        // 這裡做個判斷，如果是空白就給一個預設符號，或者判斷是否有 SVG
+        let symbolText = btn.innerText.trim();
+        if (!symbolText && btn.querySelector('svg')) {
+          symbolText = "∠"; // 如果是角度關卡(SVG)，我們手動給它一個符號
+        }
+        const symbol = encodeURIComponent(symbolText || "MATH");
+
+        // --- 4. 附加時間戳記並跳轉 ---
+        const version = new Date().getTime(); 
+        window.location.href = `${url}?v=${version}&c1=${c1}&c2=${c2}&s=${symbol}`;
+            
+      } else {
+        errorMsg.classList.remove('hidden');
+        nameInput.classList.add('border-red-500');
+        setTimeout(() => nameInput.classList.remove('border-red-500'), 2000);
+      }
+    }
+
+    /*
     function goToGame(url) {
       const nameInput = document.getElementById('globalName');
       const errorMsg = document.getElementById('errorMsg');
@@ -162,7 +206,7 @@
         nameInput.classList.add('border-red-500');
         setTimeout(() => nameInput.classList.remove('border-red-500'), 2000);
       }
-    }
+    } */
   </script>
 </body>
 </html>
