@@ -25,7 +25,7 @@
       height: 80px; display: inline-flex; align-items: center; justify-content: center; 
       font-weight: 800; font-size: var(--fluid-text); transition: all 0.2s; 
     }
-    .slot.active { border-color: var(--theme-color); color: var(--theme-color); }
+    .slot.active { border-bottom-color: var(--theme-color);}
     @media (orientation: landscape) and (max-height: 500px) {
       .game-container { display: flex; flex-direction: row; align-items: center; gap: 2rem; padding: 1rem !important; height: 100vh; }
       .side-info { flex: 1.2; }
@@ -112,7 +112,7 @@
                 <div id="header-area"></div>
                 <div class="flex items-center justify-center gap-6 mb-10">
                     <div class="font-black text-slate-800 tracking-tighter" style="font-size: var(--fluid-text)">${state.problem.display} =</div>
-                    <div class="slot active">${state.userInput}</div>
+                    <div class="slot active theme-dark">${state.userInput}</div>
                 </div>
                 </div>
                 <div class="side-keyboard w-full max-w-sm">
