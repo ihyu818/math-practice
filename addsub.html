@@ -59,6 +59,12 @@
     function render() {
       const app = document.getElementById('app');
 
+      // 1. 如果遊戲結束，直接叫模組出來畫，然後中斷 render
+      if (state.mode === 'end') {
+        UISummary.render('app', state);
+        return;
+      
+      /*
       if (state.mode === 'end') {
         // 直接從 state 讀取已計算好的數據（計算已在 startTimer 完成）
         app.innerHTML = `
@@ -97,6 +103,7 @@
           </div>`;
         return;
       }
+      */
 
         app.innerHTML = `
             <div class="min-h-screen p-4 flex flex-col items-center max-w-6xl mx-auto game-container ${state.isAnswerCorrect ? 'correct-flash' : ''}">
