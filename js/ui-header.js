@@ -46,7 +46,7 @@ const UIHeader = {
         </div>
         <div class="text-center">
           <div class="text-[9px] text-slate-400 uppercase font-bold">Score</div>
-          <div class="text-2xl font-black" theme-dark">${state.score.toFixed(1)}</div>
+          <div class="text-2xl font-black theme-dark">${state.score.toFixed(1)}</div>
         </div>
         <div class="text-right">
           <div class="text-[9px] text-slate-400 uppercase font-bold">Combo</div>
