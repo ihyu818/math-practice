@@ -18,7 +18,7 @@ const UIHeader = {
     container.innerHTML = `
       <div class="w-full bg-gray-200 h-1.5 rounded-full mb-4 overflow-hidden">
         <div id="timer-bar" class="h-full transition-all duration-500" 
-             style="width: ${timePercent}%; background-color: var(--theme-color)"></div>
+             style="width: ${timePercent}%; background-color: var(--theme-color); filter: brightness(0.8);"></div>
       </div>
       <div class="w-full grid grid-cols-3 items-center mb-6 px-1">
         <div class="text-left">
