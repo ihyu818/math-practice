@@ -94,6 +94,7 @@
       else if (key === '-') { if (state.userInput === "") state.userInput = "-"; }
       else { if (state.userInput.length < 7) state.userInput += key; }
       */
+      ScoringEngine.handleInput(state, key);
       checkAnswer(); render();
     }
 
@@ -107,6 +108,33 @@
       state.isAnswerCorrect = true;
       const ts = (Date.now() - state.problem.start) / 1000;
 
+      // 1. 使用引擎處理統計與計分 (它會更新 state.score, combo, maxCombo 等)
+      // 並且它也會幫你累加 state.totalSolved (等於 totalProblems)
+      const result = ScoringEngine.processCorrect(state, ts);
+      
+      // 2. 由於 ScoringEngine 內部使用的是 totalSolved，
+      // 為了對接你底下的 startTimer 統計邏輯，我們同步這兩個變數
+      state.totalProblems = state.totalSolved;
+      state.totalTimeSpent = state.stats.totalTime;
+
+      // 3. 更新一次到位數統計（供結算畫面顯示）
+      if (result.status === "Perfect") {
+        state.perfectCorrect++;
+      }
+
+      render();
+      
+      // 4. 發送數據（使用引擎計算出的 result.earn）
+      fetch(`${SCRIPT_URL}?action=save&type=AddSub&studentName=${encodeURIComponent(state.name)}&problem=${encodeURIComponent(state.problem.display)}&correctAnswer=${state.problem.ans}&userAnswer=${state.userInput}&isCorrect=true&timeSpent=${ts}&score=${result.earn}&combo=${state.combo}`, { mode: 'no-cors' });
+      
+      setTimeout(nextProblem, 220);
+    }
+    /*
+    function handleCorrect() {
+      state.isAnswerCorrect = true;
+      const ts = (Date.now() - state.problem.start) / 1000;
+
+      const result = ScoringEngine.processCorrect(state, ts);
       state.totalProblems++;     // 只要答對，分母就加 1
       state.totalTimeSpent += ts; // 累加時間供平均速度計算
 
@@ -134,19 +162,18 @@
       fetch(`${SCRIPT_URL}?action=save&type=AddSub&studentName=${encodeURIComponent(state.name)}&problem=${encodeURIComponent(state.problem.display)}&correctAnswer=${state.problem.ans}&userAnswer=${state.userInput}&isCorrect=true&timeSpent=${ts}&score=${earn}&combo=${state.combo}`, { mode: 'no-cors' });
       setTimeout(nextProblem, 220);
     }
+    */
 
     function nextProblem() {
       const a = Math.floor(Math.random() * 41) - 20;
       const b = Math.floor(Math.random() * 41) - 20;
       const op = Math.random() > 0.5 ? '+' : '-';
       state.problem = { display: `${a} ${op} (${b})`, ans: op === '+' ? (a + b) : (a - b), start: Date.now() };
-      state.userInput = ""; state.isAnswerCorrect = false; state.hasModified = false; render();
-
-      state.userInput = "";
+      state.userInput = ""; 
+      state.isAnswerCorrect = false; 
       state.hasModified = false;
       state.attempts = 1;
       state.isCorrectingMode = false; // 關鍵：重置修正鎖
-      state.isAnswerCorrect = false;
       render();
     }
 
