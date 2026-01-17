@@ -180,7 +180,20 @@
 
         state.isCorrectFlash = true;
         render();
-        fetch(`${SCRIPT_URL}?action=save&type=Angle&studentName=${encodeURIComponent(state.name)}&problem=${state.targetAngle}&isCorrect=true&score=${earn}&combo=${state.combo}`, { mode: 'no-cors' });
+
+        // 準備傳輸包 p
+        const p = {
+          problem: state.targetAngle + "°",
+          ans: state.targetAngle,
+          userAns: state.userAngle,
+          status: true,
+          ts: (Date.now() - state.startTime) / 1000,
+          earn: earn,
+          keyLog: "" 
+        };
+        // 使用模組發送
+        SyncProtocol.saveLog(SCRIPT_URL, state, p);
+        //fetch(`${SCRIPT_URL}?action=save&type=Angle&studentName=${encodeURIComponent(state.name)}&problem=${state.targetAngle}&isCorrect=true&score=${earn}&combo=${state.combo}`, { mode: 'no-cors' });
         
         setTimeout(() => {
           state.isCorrectFlash = false;
