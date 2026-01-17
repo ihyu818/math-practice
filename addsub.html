@@ -237,15 +237,18 @@
         if (state.timeLeft <= 0) {
           clearInterval(timer); state.mode = 'end';
 
+          /* 以下刪除
           state.accuracy = state.totalProblems > 0 
             ? ((state.perfectCorrect / state.totalProblems) * 100).toFixed(1) 
             : "0.0";
-
           state.avgSpeed = state.totalProblems > 0 
             ? (state.totalTimeSpent / state.totalProblems).toFixed(2) 
             : "0.00";
-
           fetch(`${SCRIPT_URL}?action=saveSummary&type=AddSub&studentName=${encodeURIComponent(state.name)}&score=${state.score.toFixed(2)}&maxCombo=${state.maxCombo}`, { mode: 'no-cors' });
+          以上刪除 */
+
+          // 發送總結數據 (SyncProtocol 會自動計算平均速度)
+          SyncProtocol.saveSummary(SCRIPT_URL, state);
         }
         render();
       }, 1000);
