@@ -6,7 +6,6 @@
   <title>廣義角實驗室 - Math Lab</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="js/session-manager.js?v=20260118"></script>
-  <script src="js/ui-header.js?v=20260118"></script>
   <style>
     :root { --fluid-text: clamp(2rem, 10vw, 4rem); }
     body { background-color: #f8fafc; overflow: hidden; touch-action: none; }
@@ -24,28 +23,21 @@
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5SPY0XNjPWaRAgSmSZx1cSgTTeuACaT17Lx96Oy0TkALO0mgOKA-mr3KuUtFCNVir2Q/exec'; 
     const TOTAL_TIME = 120;
     
-  let state = {
+    let state = {
       mode: 'play',
-      gameType: 'directedAngle',                     // 增加這行，標記遊戲類型
-      name: SessionManager.getName(),         // 改用模組獲取 index 存的姓名
-      sessionId: SessionManager.getSessionId(),// 改用模組獲取唯一 ID
-      
+      name: SessionManager.getName(), 
+      sessionId: SessionManager.getSessionId(),
+      gameType: 'directedAngle',
       targetAngle: null,
       lastAngle: null, // 用於防重複
       userAngle: null, 
       isDown: false,
+      startTime: 0,
       score: 0, combo: 0, maxCombo: 0, timeLeft: TOTAL_TIME,
-      
-      // 為之後的 ScoringEngine 預留標準結構
-      totalSolved: 0,
-      totalPerfect: 0,
-      stats: { totalTime: 0, perfectTime: 0, correctedTime: 0 },
-      attempts: 1,
-      isCorrectingMode: false,
-      
-      isCorrectFlash: false
+      totalProblems: 0, perfectCorrect: 0,
+      accuracy: 0, isCorrectFlash: false, isDown: false
     };
-    
+
     let timer = null;
     const specialAngles = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330];
 
@@ -70,24 +62,25 @@
         return;
       }
 
-      // 注意：這裡我們保留外層容器，但內部的 header 區塊交給模組
+      const timePercent = (state.timeLeft / TOTAL_TIME) * 100;
       app.innerHTML = /* html */ `
         <div class="min-h-screen p-4 flex flex-col items-center max-w-6xl mx-auto ${state.isCorrectFlash ? 'correct-flash' : ''}">
           <div class="w-full text-center">
-            
-            <div id="header-area"></div>
-
+            <div class="w-full bg-slate-200 h-3 rounded-full mb-4 overflow-hidden shadow-inner">
+              <div id="timer-bar" class="bg-blue-500 h-full" style="width: ${timePercent}%"></div>
+            </div>
+            <div class="w-full grid grid-cols-3 bg-white p-4 rounded-3xl shadow-sm mb-6 items-center font-bold score-box">
+              <div class="text-left text-xs text-slate-300 tracking-widest truncate">${state.name}</div>
+              <div><div class="text-[10px] text-slate-400 uppercase">Score</div><div class="text-2xl text-blue-600 font-black">${state.score.toFixed(2)}</div></div>
+              <div class="text-right"><div class="text-[10px] text-slate-400 uppercase">Combo</div><div class="text-2xl font-black text-orange-500">${state.combo}</div></div>
+            </div>
             <div class="mb-2 text-slate-400 font-bold tracking-widest uppercase text-sm">Target Angle</div>
             <div class="font-black text-slate-800 mb-6 italic" style="font-size: var(--fluid-text)">${state.targetAngle}°</div>
-            
             <div class="relative inline-block shadow-2xl rounded-full bg-white p-2 border-4 border-slate-50">
               <canvas id="angleCanvas" width="360" height="360"></canvas>
             </div>
           </div>
         </div>`;
-
-      // 呼叫模組渲染 Header (包含進度條、姓名、分數、Combo)
-      UIHeader.render('header-area', state);
       drawCircle();
     }
 
@@ -200,11 +193,12 @@
       }
     }
 
-    // 1. 產生下一題的函數 (純粹換題目)
     function nextProblem() {
+      // const pool = [...specialAngles, ...specialAngles.map(a => a - 360)];
       const pool = specialAngles;
       let newTarget;
       
+      // 防重複機制：如果抽到跟上次一樣的角度，就重抽
       do {
         newTarget = pool[Math.floor(Math.random() * pool.length)];
       } while (newTarget === state.lastAngle);
@@ -213,16 +207,16 @@
       state.lastAngle = newTarget; // 更新最後一次題目紀錄
       state.startTime = Date.now();
       state.userAngle = null;
-      render(); // 產生完題目，叫畫面更新
+      render();
     }
-    
+
     function startTimer() {
-      if (timer) clearInterval(timer); // 確保不會重複啟動
       timer = setInterval(() => {
         state.timeLeft--;
         if (state.timeLeft <= 0) {
           clearInterval(timer);
           state.mode = 'end';
+          state.accuracy = state.totalProblems > 0 ? ((state.perfectCorrect / state.totalProblems) * 100).toFixed(1) : "0.0";
           fetch(`${SCRIPT_URL}?action=saveSummary&type=Angle&studentName=${encodeURIComponent(state.name)}&score=${state.score.toFixed(2)}&maxCombo=${state.maxCombo}`, { mode: 'no-cors' });
         }
         render();
@@ -256,41 +250,9 @@
     window.addEventListener('mouseup', onEnd);
     window.addEventListener('touchend', onEnd);
 
-    // ... 事件監聽器的代碼 (window.addEventListener ...)
-    }
-
-    // 4. 【關鍵啟動區】這才是腳本的最後幾行
-    UIHeader.initTheme();     // 初始化主題顏色
-    SessionManager.refresh(); // 刷新這一場的 ID
-    nextProblem();            // 呼叫一次產生第一題
-    startTimer();             // 啟動計時
+    SessionManager.refresh(); // 強制產生這一場的唯一 ID
+    nextProblem();
+    startTimer();
   </script>
 </body>
 </html>
-
-
-
-
-    // 2. 計時器函數 (維持不變)
-    function startTimer() {
-      if (timer) clearInterval(timer); // 確保不會重複啟動
-      timer = setInterval(() => {
-        state.timeLeft--;
-        if (state.timeLeft <= 0) {
-          clearInterval(timer);
-          state.mode = 'end';
-          // 發送總結 (這裡暫留你原本的 fetch)
-          fetch(`${SCRIPT_URL}?action=saveSummary&type=Angle&studentName=${encodeURIComponent(state.name)}&score=${state.score.toFixed(2)}&maxCombo=${state.maxCombo}`, { mode: 'no-cors' });
-        }
-        render();
-      }, 1000);
-    }
-
-    // 3. 事件監聽 (維持你原本的 window.addEventListener ...)
-    // ... (這裡請保留你原本那一大段 mouse/touch 監聽)
-
-    // 4. 【關鍵啟動區】這才是腳本的最後幾行
-    UIHeader.initTheme();     // 初始化主題顏色
-    SessionManager.refresh(); // 刷新這一場的 ID
-    nextProblem();            // 呼叫一次產生第一題
-    startTimer();             // 啟動計時
