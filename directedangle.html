@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>廣義角實驗室 - Math Lab</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  
   <style>
     :root { --fluid-text: clamp(2rem, 10vw, 4rem); }
     body { background-color: #f8fafc; overflow: hidden; touch-action: none; }
@@ -25,9 +24,7 @@
     
     let state = {
       mode: 'play',
-      name: SessionManager.getName(), 
-      sessionId: SessionManager.getSessionId(),
-      gameType: 'directedAngle',
+      name: localStorage.getItem('math_lab_name') || 'Guest',
       targetAngle: null,
       lastAngle: null, // 用於防重複
       userAngle: null, 
@@ -250,11 +247,8 @@
     window.addEventListener('mouseup', onEnd);
     window.addEventListener('touchend', onEnd);
 
-    /*
-    SessionManager.refresh(); // 強制產生這一場的唯一 ID
     nextProblem();
     startTimer();
-    */
   </script>
 </body>
 </html>
