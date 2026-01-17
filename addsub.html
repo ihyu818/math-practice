@@ -46,6 +46,8 @@
   <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5SPY0XNjPWaRAgSmSZx1cSgTTeuACaT17Lx96Oy0TkALO0mgOKA-mr3KuUtFCNVir2Q/exec'; 
     const TOTAL_TIME = 120;
+
+    /* 以下為修改前的樣子的部分
     let state = {
       mode: 'play',
       name: localStorage.getItem('math_lab_name') || 'Guest',
@@ -57,7 +59,35 @@
       accuracy: 0,
       avgSpeed: 0
     };
+    */
 
+    /* 以下為修改後的樣子 */
+    let state = {
+      mode: 'play',
+      gameType: 'AddSub',                     // 供 Protocol 識別
+      sessionId: SessionManager.getSessionId(),// 呼叫模組產生 ID
+      name: SessionManager.getName(),         // 呼叫模組抓名字
+      problem: null, 
+      userInput: "", 
+      isAnswerCorrect: false, 
+      score: 0, 
+      combo: 0, 
+      maxCombo: 0, 
+      timeLeft: TOTAL_TIME,
+      
+      // ScoringEngine 專用統計
+      totalSolved: 0,
+      totalPerfect: 0,
+      totalCorrected: 0,
+      stats: { totalTime: 0, perfectTime: 0, correctedTime: 0 },
+      
+      // 修正鎖專用
+      attempts: 1,
+      hasModified: false,
+      isCorrectingMode: false
+    };
+    /* 以上為修改後的樣子 */
+    
     let timer = null;
 
     function render() {
@@ -111,23 +141,45 @@
       // 1. 使用引擎處理統計與計分 (它會更新 state.score, combo, maxCombo 等)
       // 並且它也會幫你累加 state.totalSolved (等於 totalProblems)
       const result = ScoringEngine.processCorrect(state, ts);
-      
+
+      /* 以下為刪除部分
       // 2. 由於 ScoringEngine 內部使用的是 totalSolved，
       // 為了對接你底下的 startTimer 統計邏輯，我們同步這兩個變數
       state.totalProblems = state.totalSolved;
       state.totalTimeSpent = state.stats.totalTime;
-
       // 3. 更新一次到位數統計（供結算畫面顯示）
       if (result.status === "Perfect") {
         state.perfectCorrect++;
       }
+      以上為刪除部分*/
+
+      // 以下為修改新增部分
+      // 2. 準備 Protocol 規格的封裝包 p
+      const p = {
+        problem: state.problem.display,
+        ans: state.problem.ans,
+        userAns: state.userInput,
+        status: true,
+        ts: ts,
+        earn: result.earn,
+        keyLog: "" // 預留未來按鍵追蹤
+      };
+      // 以上為修改新增部分
 
       render();
-      
+
+      /* 以下為刪除部分
       // 4. 發送數據（使用引擎計算出的 result.earn）
       fetch(`${SCRIPT_URL}?action=save&type=AddSub&studentName=${encodeURIComponent(state.name)}&problem=${encodeURIComponent(state.problem.display)}&correctAnswer=${state.problem.ans}&userAnswer=${state.userInput}&isCorrect=true&timeSpent=${ts}&score=${result.earn}&combo=${state.combo}`, { mode: 'no-cors' });
+      setTimeout(nextProblem, 220);
+      以上為刪除部分 */
+
+      // 以下為修改新增部分
+      // 3. 呼叫 Protocol 發送 (會自動帶入 sessionId 與 name)
+      SyncProtocol.saveLog(SCRIPT_URL, state, p);
       
       setTimeout(nextProblem, 220);
+      // 以上為修改新增部分
     }
     /*
     function handleCorrect() {
@@ -169,6 +221,7 @@
       const b = Math.floor(Math.random() * 41) - 20;
       const op = Math.random() > 0.5 ? '+' : '-';
       state.problem = { display: `${a} ${op} (${b})`, ans: op === '+' ? (a + b) : (a - b), start: Date.now() };
+      // 每題重置
       state.userInput = ""; 
       state.isAnswerCorrect = false; 
       state.hasModified = false;
