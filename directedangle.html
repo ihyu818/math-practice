@@ -26,6 +26,7 @@
     let state = {
       mode: 'play',
       name: localStorage.getItem('math_lab_name') || 'Guest',
+      gameType: 'directedAngle',
       targetAngle: null,
       lastAngle: null, // 用於防重複
       userAngle: null, 
@@ -215,7 +216,9 @@
           clearInterval(timer);
           state.mode = 'end';
           state.accuracy = state.totalProblems > 0 ? ((state.perfectCorrect / state.totalProblems) * 100).toFixed(1) : "0.0";
-          fetch(`${SCRIPT_URL}?action=saveSummary&type=Angle&studentName=${encodeURIComponent(state.name)}&score=${state.score.toFixed(2)}&maxCombo=${state.maxCombo}`, { mode: 'no-cors' });
+          //fetch(`${SCRIPT_URL}?action=saveSummary&type=Angle&studentName=${encodeURIComponent(state.name)}&score=${state.score.toFixed(2)}&maxCombo=${state.maxCombo}`, { mode: 'no-cors' });
+          // 使用模組發送總結
+          SyncProtocol.saveSummary(SCRIPT_URL, state);
         }
         render();
       }, 1000);
