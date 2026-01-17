@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>加減運算實驗室 - Math Lab</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/session-manager.js?v=20260114"></script>
+  <script src="js/ui-header.js?v=20260114"></script>
+  <script src="js/ui-keyboard.js?v=20260114"></script>
+  <script src="js/scoring-engine.js?v=20260114"></script>
+  <script src="js/ui-summary.js?v=20260114"></script>
+  <script src="js/sync-protocol.js?v=20260114"></script>
+  <style>
+    :root { --fluid-text: clamp(2rem, 10vw, 4rem); --fluid-slot: clamp(2.5rem, 12vw, 5rem); }
+    body { background-color: #f8fafc; overflow-x: hidden; touch-action: manipulation; }
+    .key-btn { 
+      display: flex; align-items: center; justify-content: center; 
+      background-color: white; border: 1px solid #e5e7eb; border-radius: 1rem; 
+      font-weight: bold; font-size: clamp(1.5rem, 6vw, 2.2rem);
+      height: 70px; transition: all 0.05s; cursor: pointer; user-select: none;
+      -webkit-tap-highlight-color: transparent; box-shadow: 0 2px 0 #e5e7eb;
+    }
+    .key-btn:active { transform: translateY(2px); box-shadow: none; background-color: #f1f5f9; }
+    .key-btn-op { background-color: #eff6ff; color: #2563eb; border-color: #bfdbfe; box-shadow: 0 2px 0 #bfdbfe; }
+    .key-btn-back { background-color: #fff1f2; color: #e11d48; border-color: #fecdd3; box-shadow: 0 2px 0 #fecdd3; height: 100%; }
+    .slot { 
+      border-bottom: 5px solid #cbd5e1; min-width: var(--fluid-slot); 
+      height: 80px; display: inline-flex; align-items: center; justify-content: center; 
+      font-weight: 800; font-size: var(--fluid-text); transition: all 0.2s; 
+    }
+    .slot.active { border-bottom-color: var(--theme-color);}
+    @media (orientation: landscape) and (max-height: 500px) {
+      .game-container { display: flex; flex-direction: row; align-items: center; gap: 2rem; padding: 1rem !important; height: 100vh; }
+      .side-info { flex: 1.2; }
+      .side-keyboard { flex: 1; max-width: 340px; }
+      .key-btn { height: 50px; font-size: 1.5rem; }
+      .slot { height: 60px; }
+    }
+    .correct-flash { animation: flash 0.4s ease-out; }
+    @keyframes flash { 0% { background-color: transparent; } 50% { background-color: #dbeafe; } 100% { background-color: transparent; } }
+  </style>
+</head>
+<body class="text-slate-800 font-sans">
+  <div id="app"></div>
+  <script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5SPY0XNjPWaRAgSmSZx1cSgTTeuACaT17Lx96Oy0TkALO0mgOKA-mr3KuUtFCNVir2Q/exec'; 
+    const TOTAL_TIME = 120;
+    let state = {
+      mode: 'play',
+      name: localStorage.getItem('math_lab_name') || 'Guest',
+      problem: null, userInput: "", hasModified: false, isAnswerCorrect: false, 
+      score: 0, combo: 0, maxCombo: 0, timeLeft: TOTAL_TIME,
+      totalProblems: 0,   // 總答對題數 (分母)
+      perfectCorrect: 0,  // 一次到位題數 (分子)
+      totalTimeSpent: 0,   // 累加所有答對題目的耗時
+      accuracy: 0,
+      avgSpeed: 0
+    };
+
+    let timer = null;
+
+    function render() {
+      const app = document.getElementById('app');
+
+      // 1. 如果遊戲結束，直接叫模組出來畫，然後中斷 render
+      if (state.mode === 'end') {
+        UISummary.render('app', state);
+        return;
+      }
+
+        app.innerHTML = `
+            <div class="min-h-screen p-4 flex flex-col items-center max-w-6xl mx-auto game-container ${state.isAnswerCorrect ? 'correct-flash' : ''}">
+                <div class="side-info w-full text-center">
+                <div id="header-area"></div>
+                <div class="flex items-center justify-center gap-6 mb-10">
+                    <div class="font-black text-slate-800 tracking-tighter" style="font-size: var(--fluid-text)">${state.problem.display} =</div>
+                    <div class="slot active theme-dark">${state.userInput}</div>
+                </div>
+                </div>
+                <div class="side-keyboard w-full max-w-sm">
+                  <div id="keyboard-area"></div>
+                </div>
+            </div>`;
+
+        UIHeader.render('header-area', state);
+        UIKeyboard.render('keyboard-area', pressKey, 'numeric');
+    }
+
+    function pressKey(key) {
+      if (state.isAnswerCorrect || state.mode === 'end') return;
+      /*
+      if (key === 'back') { state.userInput = state.userInput.slice(0, -1); state.hasModified = true; }
+      else if (key === '-') { if (state.userInput === "") state.userInput = "-"; }
+      else { if (state.userInput.length < 7) state.userInput += key; }
+      */
+      ScoringEngine.handleInput(state, key);
+      checkAnswer(); render();
+    }
+
+    function checkAnswer() {
+      if (state.userInput === "" || state.userInput === "-") return;
+      const userAns = parseInt(state.userInput);
+      if (userAns === state.problem.ans) handleCorrect();
+    }
+
+    function handleCorrect() {
+      state.isAnswerCorrect = true;
+      const ts = (Date.now() - state.problem.start) / 1000;
+
+      // 1. 使用引擎處理統計與計分 (它會更新 state.score, combo, maxCombo 等)
+      // 並且它也會幫你累加 state.totalSolved (等於 totalProblems)
+      const result = ScoringEngine.processCorrect(state, ts);
+      
+      // 2. 由於 ScoringEngine 內部使用的是 totalSolved，
+      // 為了對接你底下的 startTimer 統計邏輯，我們同步這兩個變數
+      state.totalProblems = state.totalSolved;
+      state.totalTimeSpent = state.stats.totalTime;
+
+      // 3. 更新一次到位數統計（供結算畫面顯示）
+      if (result.status === "Perfect") {
+        state.perfectCorrect++;
+      }
+
+      render();
+      
+      // 4. 發送數據（使用引擎計算出的 result.earn）
+      fetch(`${SCRIPT_URL}?action=save&type=AddSub&studentName=${encodeURIComponent(state.name)}&problem=${encodeURIComponent(state.problem.display)}&correctAnswer=${state.problem.ans}&userAnswer=${state.userInput}&isCorrect=true&timeSpent=${ts}&score=${result.earn}&combo=${state.combo}`, { mode: 'no-cors' });
+      
+      setTimeout(nextProblem, 220);
+    }
+    /*
+    function handleCorrect() {
+      state.isAnswerCorrect = true;
+      const ts = (Date.now() - state.problem.start) / 1000;
+
+      const result = ScoringEngine.processCorrect(state, ts);
+      state.totalProblems++;     // 只要答對，分母就加 1
+      state.totalTimeSpent += ts; // 累加時間供平均速度計算
+
+      if (state.hasModified) {
+        state.combo = 0;
+      } else {
+        state.combo++;
+        state.perfectCorrect++;  // 只有沒按過 Backspace，分子才加 1
+      }
+      if (state.combo > state.maxCombo) state.maxCombo = state.combo;
+
+      let earn = 0;
+      if (state.combo === 0) {
+        earn = 1.0;
+      } else {
+        // 純粹數學累加：線性 + 階梯指數 (只有 3 的倍數有 bonus)
+        earn = 1 + (0.1 * (state.combo - 1));
+        if (state.combo % 3 === 0) {
+          earn += 0.01 * Math.pow(2, (state.combo / 3) - 1);
+        }
+      }
+      
+      state.score += earn;
+      render();
+      fetch(`${SCRIPT_URL}?action=save&type=AddSub&studentName=${encodeURIComponent(state.name)}&problem=${encodeURIComponent(state.problem.display)}&correctAnswer=${state.problem.ans}&userAnswer=${state.userInput}&isCorrect=true&timeSpent=${ts}&score=${earn}&combo=${state.combo}`, { mode: 'no-cors' });
+      setTimeout(nextProblem, 220);
+    }
+    */
+
+    function nextProblem() {
+      const a = Math.floor(Math.random() * 41) - 20;
+      const b = Math.floor(Math.random() * 41) - 20;
+      const op = Math.random() > 0.5 ? '+' : '-';
+      state.problem = { display: `${a} ${op} (${b})`, ans: op === '+' ? (a + b) : (a - b), start: Date.now() };
+      state.userInput = ""; 
+      state.isAnswerCorrect = false; 
+      state.hasModified = false;
+      state.attempts = 1;
+      state.isCorrectingMode = false; // 關鍵：重置修正鎖
+      render();
+    }
+
+    function startTimer() {
+      if (timer) clearInterval(timer);
+      timer = setInterval(() => {
+        state.timeLeft--;
+        if (state.timeLeft <= 0) {
+          clearInterval(timer); state.mode = 'end';
+
+          state.accuracy = state.totalProblems > 0 
+            ? ((state.perfectCorrect / state.totalProblems) * 100).toFixed(1) 
+            : "0.0";
+
+          state.avgSpeed = state.totalProblems > 0 
+            ? (state.totalTimeSpent / state.totalProblems).toFixed(2) 
+            : "0.00";
+
+          fetch(`${SCRIPT_URL}?action=saveSummary&type=AddSub&studentName=${encodeURIComponent(state.name)}&score=${state.score.toFixed(2)}&maxCombo=${state.maxCombo}`, { mode: 'no-cors' });
+        }
+        render();
+      }, 1000);
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (state.mode !== 'play') return;
+      if (e.key >= '0' && e.key <= '9') pressKey(e.key);
+      else if (e.key === '-') pressKey('-');
+      else if (e.key === 'Backspace') pressKey('back');
+    });
+
+    UIHeader.initTheme(); nextProblem(); startTimer(); render();
+  </script>
+</body>
+</html>
