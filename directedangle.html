@@ -26,7 +26,8 @@
     
     let state = {
       mode: 'play',
-      name: localStorage.getItem('math_lab_name') || 'Guest',
+      sessionId: SessionManager.getSessionId(),// 呼叫模組產生 ID
+      name: SessionManager.getName(),         // 呼叫模組抓名字
       gameType: 'directedAngle',
       targetAngle: null,
       lastAngle: null, // 用於防重複
