@@ -257,17 +257,29 @@
     window.addEventListener('mouseup', onEnd);
     window.addEventListener('touchend', onEnd);
 
-    // --- 這裡才是真正的啟動區塊 (原本寫錯的地方) ---
-    function initGame() {
-      UIHeader.initTheme();     // 初始化顏色
-      SessionManager.refresh(); // 產生這一局的 ID
-      nextProblem();            // 產生第一題
-      startTimer();             // 開始倒數
-      render();                 // 渲染畫面
+    // ... 事件監聽器的代碼 (window.addEventListener ...)
+
+    // --- 修正後的啟動區塊 ---
+    function startEverything() {
+      // 1. 初始化環境
+      UIHeader.initTheme();     
+      SessionManager.refresh(); 
+
+      // 2. 先產生題目數據
+      const pool = specialAngles;
+      let newTarget = pool[Math.floor(Math.random() * pool.length)];
+      state.targetAngle = newTarget;
+      state.lastAngle = newTarget;
+      state.startTime = Date.now();
+      state.userAngle = null;
+
+      // 3. 啟動計時並畫出第一個畫面
+      startTimer();
+      render(); // 這裡 render 裡面會呼叫 UIHeader.render，此時 HTML 已就緒
     }
 
-    // 視窗載入後啟動
-    window.onload = initGame;
+    // 直接執行啟動函數
+    startEverything();
   </script>
 </body>
 </html>
