@@ -201,15 +201,6 @@
     }
 
     function nextProblem() {
-      // 初始化主題顏色 (例如：藍色)
-      UIHeader.initTheme(); 
-      
-      // 遊戲啟動
-      SessionManager.refresh(); // 強制刷新這一場遊戲的 ID
-      nextProblem();
-      startTimer();
-      render(); // 確保初始畫面正確
-      
       // const pool = [...specialAngles, ...specialAngles.map(a => a - 360)];
       const pool = specialAngles;
       let newTarget;
@@ -266,8 +257,17 @@
     window.addEventListener('mouseup', onEnd);
     window.addEventListener('touchend', onEnd);
 
-    nextProblem();
-    startTimer();
+    // --- 這裡才是真正的啟動區塊 (原本寫錯的地方) ---
+    function initGame() {
+      UIHeader.initTheme();     // 初始化顏色
+      SessionManager.refresh(); // 產生這一局的 ID
+      nextProblem();            // 產生第一題
+      startTimer();             // 開始倒數
+      render();                 // 渲染畫面
+    }
+
+    // 視窗載入後啟動
+    window.onload = initGame;
   </script>
 </body>
 </html>
