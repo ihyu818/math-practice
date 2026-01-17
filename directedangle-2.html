@@ -201,10 +201,14 @@
     }
 
     function nextProblem() {
+      // 初始化主題顏色 (例如：藍色)
+      UIHeader.initTheme(); 
+      
       // 遊戲啟動
       SessionManager.refresh(); // 強制刷新這一場遊戲的 ID
       nextProblem();
       startTimer();
+      render(); // 確保初始畫面正確
       
       // const pool = [...specialAngles, ...specialAngles.map(a => a - 360)];
       const pool = specialAngles;
