@@ -200,12 +200,11 @@
       }
     }
 
+    // 1. 產生下一題的函數 (純粹換題目)
     function nextProblem() {
-      // const pool = [...specialAngles, ...specialAngles.map(a => a - 360)];
       const pool = specialAngles;
       let newTarget;
       
-      // 防重複機制：如果抽到跟上次一樣的角度，就重抽
       do {
         newTarget = pool[Math.floor(Math.random() * pool.length)];
       } while (newTarget === state.lastAngle);
@@ -214,16 +213,16 @@
       state.lastAngle = newTarget; // 更新最後一次題目紀錄
       state.startTime = Date.now();
       state.userAngle = null;
-      render();
+      render(); // 產生完題目，叫畫面更新
     }
-
+    
     function startTimer() {
+      if (timer) clearInterval(timer); // 確保不會重複啟動
       timer = setInterval(() => {
         state.timeLeft--;
         if (state.timeLeft <= 0) {
           clearInterval(timer);
           state.mode = 'end';
-          state.accuracy = state.totalProblems > 0 ? ((state.perfectCorrect / state.totalProblems) * 100).toFixed(1) : "0.0";
           fetch(`${SCRIPT_URL}?action=saveSummary&type=Angle&studentName=${encodeURIComponent(state.name)}&score=${state.score.toFixed(2)}&maxCombo=${state.maxCombo}`, { mode: 'no-cors' });
         }
         render();
@@ -258,28 +257,40 @@
     window.addEventListener('touchend', onEnd);
 
     // ... 事件監聽器的代碼 (window.addEventListener ...)
-
-    // --- 修正後的啟動區塊 ---
-    function startEverything() {
-      // 1. 初始化環境
-      UIHeader.initTheme();     
-      SessionManager.refresh(); 
-
-      // 2. 先產生題目數據
-      const pool = specialAngles;
-      let newTarget = pool[Math.floor(Math.random() * pool.length)];
-      state.targetAngle = newTarget;
-      state.lastAngle = newTarget;
-      state.startTime = Date.now();
-      state.userAngle = null;
-
-      // 3. 啟動計時並畫出第一個畫面
-      startTimer();
-      render(); // 這裡 render 裡面會呼叫 UIHeader.render，此時 HTML 已就緒
     }
 
-    // 直接執行啟動函數
-    startEverything();
+    // 4. 【關鍵啟動區】這才是腳本的最後幾行
+    UIHeader.initTheme();     // 初始化主題顏色
+    SessionManager.refresh(); // 刷新這一場的 ID
+    nextProblem();            // 呼叫一次產生第一題
+    startTimer();             // 啟動計時
   </script>
 </body>
 </html>
+
+
+
+
+    // 2. 計時器函數 (維持不變)
+    function startTimer() {
+      if (timer) clearInterval(timer); // 確保不會重複啟動
+      timer = setInterval(() => {
+        state.timeLeft--;
+        if (state.timeLeft <= 0) {
+          clearInterval(timer);
+          state.mode = 'end';
+          // 發送總結 (這裡暫留你原本的 fetch)
+          fetch(`${SCRIPT_URL}?action=saveSummary&type=Angle&studentName=${encodeURIComponent(state.name)}&score=${state.score.toFixed(2)}&maxCombo=${state.maxCombo}`, { mode: 'no-cors' });
+        }
+        render();
+      }, 1000);
+    }
+
+    // 3. 事件監聽 (維持你原本的 window.addEventListener ...)
+    // ... (這裡請保留你原本那一大段 mouse/touch 監聽)
+
+    // 4. 【關鍵啟動區】這才是腳本的最後幾行
+    UIHeader.initTheme();     // 初始化主題顏色
+    SessionManager.refresh(); // 刷新這一場的 ID
+    nextProblem();            // 呼叫一次產生第一題
+    startTimer();             // 啟動計時
