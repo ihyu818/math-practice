@@ -43,7 +43,7 @@
       hasModified: false,
       stats: { totalTime: 0, perfectTime: 0, correctedTime: 0 },
       totalProblems: 0, perfectCorrect: 0,
-      accuracy: 0, isCorrectFlash: false, isDown: false
+      accuracy: 0, isCorrectFlash: false
     };
 
     let timer = null;
@@ -73,10 +73,12 @@
       }
       
       app.innerHTML = `
-        <div class="min-h-screen p-4 flex flex-col items-center ...">
+        <div class="min-h-screen p-4 flex flex-col items-center max-w-6xl mx-auto">
           <div id="header-area"></div>
+          
           <div class="mt-8 mb-2 text-slate-400 font-bold tracking-widest uppercase text-sm">Target Angle</div>
           <div class="font-black text-slate-800 mb-6 italic" style="font-size: var(--fluid-text)">${state.targetAngle}°</div>
+          
           <canvas id="angleCanvas" width="360" height="360"></canvas>
         </div>`;
 
