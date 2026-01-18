@@ -25,7 +25,9 @@
   <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5SPY0XNjPWaRAgSmSZx1cSgTTeuACaT17Lx96Oy0TkALO0mgOKA-mr3KuUtFCNVir2Q/exec'; 
     const TOTAL_TIME = 120;
-    
+
+    let state;
+    /*
     let state = {
       mode: 'play',
       sessionId: SessionManager.getSessionId(),// 呼叫模組產生 ID
@@ -47,12 +49,36 @@
       // ------------------
       accuracy: 0, isCorrectFlash: false
     };
+    */
 
     let timer = null;
     const specialAngles = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330];
 
+    function initState() {
+          state = {
+            mode: 'play',
+            sessionId: SessionManager.getSessionId(),
+            name: SessionManager.getName(),          
+            gameType: 'directedAngle',
+            targetAngle: null,
+            lastAngle: null,
+            userAngle: null, 
+            isDown: false,
+            startTime: 0,
+            score: 0, combo: 0, maxCombo: 0, timeLeft: TOTAL_TIME,
+            totalSolved: 0,
+            totalPerfect: 0,
+            hasModified: false,
+            attempts: 1,
+            stats: { totalTime: 0, perfectTime: 0, correctedTime: 0 },
+            accuracy: 0, 
+            isCorrectFlash: false
+          };
+        }
+        
     function render() {
       const app = document.getElementById('app');
+      if (!state || !app) return; // 安全檢查
       
       if (state.mode === 'end') {
         app.innerHTML = /* html */ `
@@ -82,6 +108,7 @@
       app.innerHTML = /* html */ `
         <div class="min-h-screen p-4 flex flex-col items-center max-w-6xl mx-auto ${state.isCorrectFlash ? 'correct-flash' : ''}">
           <div class="w-full text-center">
+            <div id="header-area"></div>
             <div class="w-full bg-slate-200 h-3 rounded-full mb-4 overflow-hidden shadow-inner">
               <div id="timer-bar" class="bg-blue-500 h-full" style="width: ${timePercent}%"></div>
             </div>
@@ -97,9 +124,14 @@
             </div>
           </div>
         </div>`;
+      // 關鍵修正：給瀏覽器一點點時間(0ms)把 HTML 畫出來，再執行 UIHeader 渲染
+      setTimeout(() => {
+        if (document.getElementById('header-area')) {
+          UIHeader.render('header-area', state);
+        }
+      }, 0);
       drawCircle();
     }
-
     
     function drawCircle() {
       const canvas = document.getElementById('angleCanvas');
@@ -148,7 +180,6 @@
       ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fill();
   }
 
-
     function snapAngle(x, y) {
       const dx = x - 180;
       const dy = 180 - y;
@@ -166,8 +197,6 @@
         return getDist(curr, deg) < getDist(prev, deg) ? curr : prev;
       });
     }
-
-
 
     function handleInput(e) {
       if (state.mode !== 'play') return;
@@ -292,9 +321,15 @@
     window.addEventListener('mouseup', onEnd);
     window.addEventListener('touchend', onEnd);
 
-    SessionManager.refresh(); // 確保這一局有新 ID
-    nextProblem();
-    startTimer();
+    window.addEventListener('load', () => {
+      initState();              // 1. 初始化 state
+      SessionManager.refresh(); // 2. 刷新 ID
+      nextProblem();            // 3. 產生第一題
+      startTimer();             // 4. 啟動計時
+    });
+    //SessionManager.refresh(); // 確保這一局有新 ID
+    //nextProblem();
+    //startTimer();
   </script>
 </body>
 </html>
