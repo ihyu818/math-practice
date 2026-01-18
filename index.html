@@ -175,7 +175,8 @@
         // --- 3. 抓取符號 (修正後的版本) ---
         let symbol;
         const svgElement = btn.querySelector('svg');
-        
+
+        /*
         if (svgElement) {
           // 如果有 SVG，就抓取整個 SVG 的 HTML 字串
           // 使用 btoa 轉成 Base64 可以避免 HTML 特殊符號 (如 < > #) 弄壞網址參數
@@ -185,7 +186,22 @@
           const symbolText = btn.innerText.trim() || "MATH";
           symbol = encodeURIComponent(symbolText);
         }
-                
+        */
+
+
+        // index.html 中的 goToGame 修正
+        if (svgElement) {
+            // 移除所有換行 (\n) 與標籤間的多餘空格
+            const minifiedSvg = svgElement.outerHTML.replace(/\n/g, '').replace(/>\s+</g, '><');
+            symbol = btoa(minifiedSvg); 
+        } else {
+          // 如果沒有 SVG，就抓取純文字 (如 ±, ( )( ))
+          const symbolText = btn.innerText.trim() || "MATH";
+          symbol = encodeURIComponent(symbolText);
+        }
+
+        
+        
         // --- 4. 附加時間戳記並跳轉 ---
         const version = new Date().getTime(); 
         window.location.href = `${url}?v=${version}&c1=${c1}&c2=${c2}&s=${symbol}`;
