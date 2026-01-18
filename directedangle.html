@@ -54,11 +54,22 @@
 
       // 1. 建立骨架：清空上方手寫 UI，改放一個 div
       if (state.mode === 'end') {
-        app.innerHTML = `
-            <div class="min-h-screen p-4 flex flex-col items-center">
-              <div id="header-area"></div> <div class="target-display">...</div>
-              <canvas id="angleCanvas" ...></canvas>
-            </div>`;
+        app.innerHTML = /* html */ `
+          <div class="min-h-screen flex items-center justify-center p-4 bg-slate-100">
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-md text-center border-b-[12px] border-blue-600">
+              <h2 class="text-xl font-black mb-1 italic uppercase text-slate-400">Challenge Finished</h2>
+              <div class="text-lg font-bold text-slate-600 mb-4">${state.name}</div>
+              <div class="text-6xl font-black text-blue-600 mb-8 leading-tight">${state.score.toFixed(2)}</div>
+              <div class="space-y-3 mb-10 text-left bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                <div class="flex justify-between items-center"><span class="text-slate-500 font-bold">總答對數</span><span class="text-slate-800 font-black text-xl">${state.totalProblems}</span></div>
+                <div class="flex justify-between items-center"><span class="text-slate-500 font-bold">最高連擊</span><span class="text-orange-500 font-black text-xl">${state.maxCombo}</span></div>
+                <div class="flex justify-between items-center"><span class="text-slate-500 font-bold">一次到位率</span><span class="text-slate-800 font-black text-xl">${state.accuracy}%</span></div>
+              </div>
+              <button onclick="location.reload()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg text-xl active:scale-95 transition-all">再次挑戰</button>
+            </div>
+          </div>`;
+        return;
+      }
 
       // 遊戲畫面：一定要先建立「骨架盒子」
         app.innerHTML = /* html */ `
