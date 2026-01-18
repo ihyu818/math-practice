@@ -49,11 +49,11 @@
     let timer = null;
     const specialAngles = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330];
 
+
     function render() {
       const app = document.getElementById('app');
       // ... 結束畫面邏輯 ...
 
-      // 1. 建立骨架：清空上方手寫 UI，改放一個 div
       if (state.mode === 'end') {
         app.innerHTML = /* html */ `
           <div class="min-h-screen flex items-center justify-center p-4 bg-slate-100">
@@ -71,23 +71,19 @@
           </div>`;
         return;
       }
+      
+      app.innerHTML = `
+        <div class="min-h-screen p-4 flex flex-col items-center ...">
+          <div id="header-area"></div>
+          <div class="mt-8 mb-2 text-slate-400 font-bold tracking-widest uppercase text-sm">Target Angle</div>
+          <div class="font-black text-slate-800 mb-6 italic" style="font-size: var(--fluid-text)">${state.targetAngle}°</div>
+          <canvas id="angleCanvas" width="360" height="360"></canvas>
+        </div>`;
 
-      // 遊戲畫面：一定要先建立「骨架盒子」
-        app.innerHTML = /* html */ `
-          <div class="min-h-screen p-4 flex flex-col items-center max-w-6xl mx-auto ${state.isCorrectFlash ? 'correct-flash' : ''}">
-            <div class="w-full text-center">
-              <div id="header-area"></div> <div class="mt-8 mb-2 text-slate-400 font-bold tracking-widest uppercase text-sm">Target Angle</div>
-              <div class="font-black text-slate-800 mb-6 italic" style="font-size: var(--fluid-text)">${state.targetAngle}°</div>
-              <div class="relative inline-block shadow-2xl rounded-full bg-white p-2 border-4 border-slate-50">
-                <canvas id="angleCanvas" width="360" height="360"></canvas>
-              </div>
-            </div>
-          </div>`;
-
-      // 盒子畫好後，立刻叫 UIHeader 去畫
-      if (typeof UIHeader !== 'undefined') {
-        UIHeader.render('header-area', state);
-      }
+      // 模仿 addsub 的寫法：innerHTML 寫完後立刻呼叫模組
+      UIHeader.render('header-area', state);
+      
+      // 廣義角特有的步驟：畫圖
       drawCircle();
     }
 
@@ -178,6 +174,7 @@
       
       if (isCorrect) {
         state.totalProblems++;
+        state.totalSolved++;   // 增加這行，對接模組
         state.combo++;
         state.perfectCorrect++;
         if (state.combo > state.maxCombo) state.maxCombo = state.combo;
@@ -272,8 +269,11 @@
     window.addEventListener('mouseup', onEnd);
     window.addEventListener('touchend', onEnd);
 
-    nextProblem();
-    startTimer();
+    // 移除 window.onload，回歸與 addsub 一致的「直接啟動」模式
+    UIHeader.initTheme(); 
+    nextProblem(); 
+    startTimer(); 
+    render();
   </script>
 </body>
 </html>
