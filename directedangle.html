@@ -62,9 +62,15 @@
               <div class="text-lg font-bold text-slate-600 mb-4">${state.name}</div>
               <div class="text-6xl font-black text-blue-600 mb-8 leading-tight">${state.score.toFixed(2)}</div>
               <div class="space-y-3 mb-10 text-left bg-slate-50 p-6 rounded-3xl border border-slate-100">
-                <div class="flex justify-between items-center"><span class="text-slate-500 font-bold">總答對數</span><span class="text-slate-800 font-black text-xl">${state.totalProblems}</span></div>
-                <div class="flex justify-between items-center"><span class="text-slate-500 font-bold">最高連擊</span><span class="text-orange-500 font-black text-xl">${state.maxCombo}</span></div>
-                <div class="flex justify-between items-center"><span class="text-slate-500 font-bold">一次到位率</span><span class="text-slate-800 font-black text-xl">${state.accuracy}%</span></div>
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-500 font-bold">總答對數</span>
+                  <span class="text-slate-800 font-black text-xl">${state.totalSolved}</span></div>
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-500 font-bold">最高連擊</span>
+                  <span class="text-orange-500 font-black text-xl">${state.maxCombo}</span></div>
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-500 font-bold">一次到位率</span>
+                  <span class="text-slate-800 font-black text-xl">${state.accuracy}%</span></div>
               </div>
               <button onclick="location.reload()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg text-xl active:scale-95 transition-all">再次挑戰</button>
             </div>
@@ -188,7 +194,6 @@
         //let earn = 1 + (0.1 * (state.combo - 1));
         //if (state.combo % 3 === 0) earn += 0.01 * Math.pow(2, (state.combo / 3) - 1);
         //state.score += earn;
-
         state.isCorrectFlash = true;
         const ts = (Date.now() - state.startTime) / 1000;
 
@@ -287,6 +292,7 @@
     window.addEventListener('mouseup', onEnd);
     window.addEventListener('touchend', onEnd);
 
+    SessionManager.refresh(); // 確保這一局有新 ID
     nextProblem();
     startTimer();
   </script>
