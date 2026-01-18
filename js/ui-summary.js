@@ -85,7 +85,7 @@ const UISummary = {
             </div>
             
             <div class="flex justify-between items-center">
-              <span class="text-slate-400 font-bold text-sm">一次到位率</span>
+              <span class="text-slate-400 font-bold text-sm">完美答對率</span>
               <span class="text-slate-800 font-black text-2xl">${accuracy}%</span>
             </div>
 
