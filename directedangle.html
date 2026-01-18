@@ -57,6 +57,8 @@
       const app = document.getElementById('app');
     
       if (state.mode === 'end') {
+        // 確保 app 容器是空的，讓 UISummary 好好渲染
+        app.innerHTML = "";
         UISummary.render('app', state);
         return;
       }
