@@ -5,9 +5,8 @@ const UISummary = {
 
     // 從網址抓取符號
     const params = new URLSearchParams(window.location.search);
-    const symbol = params.get('s') || 'Math'; 
+    const sParam = params.get('s') || 'Math'; 
 
-    /*
     let displaySymbol;
     try {
         // 1. 嘗試用 atob 解碼（針對 Base64 的 SVG）
@@ -24,8 +23,6 @@ const UISummary = {
         // 2. 如果 atob 報錯，代表它不是 Base64（是普通文字如 ±）
         displaySymbol = decodeURIComponent(sParam);
     }
-    */
-
     
     // 以下新增
     // 1. 從 ScoringEngine 的標準格式提取數據
