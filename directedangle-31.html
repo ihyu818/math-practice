@@ -40,11 +40,12 @@
       // 2. 補上引擎所需的統計欄位 (對接 ScoringEngine)
       totalSolved: 0,
       totalPerfect: 0,
-      attempts: 1,
-      hasModified: false,
+      totalCorrected: 0, // 新增：用於統計修正過才對的題目
+      attempts: 1,       // 廣義角預設為 1，除非您之後想加入「點擊確認」機制
+      hasModified: false, // 在廣義角中，如果使用者拖曳過程中手放開又重抓，可視為修正（見下文建議）
       stats: { totalTime: 0, perfectTime: 0, correctedTime: 0 },
-      totalProblems: 0, perfectCorrect: 0,
-      accuracy: 0, isCorrectFlash: false
+
+      isCorrectFlash: false      
     };
 
     let timer = null;
@@ -152,6 +153,14 @@
 
     function handleInput(e) {
       if (state.mode !== 'play') return;
+
+      // 如果使用者在同一題內「重新開始觸摸」，視為嘗試修正
+      if (state.isDown && state.userAngle !== null && !state.isDraggingInSameTurn) {
+          state.hasModified = true;
+          state.attempts++;
+          state.isDraggingInSameTurn = true; // 標記目前正在這一次拖曳中
+      }
+      
       const canvas = document.getElementById('angleCanvas');
       const rect = canvas.getBoundingClientRect();
       const t = e.touches ? e.touches[0] : e;
@@ -165,17 +174,24 @@
 
       // 同界角判定：((user - target) % 360) === 0
       const isCorrect = (state.userAngle - state.targetAngle) % 360 === 0;
-      
-      if (isCorrect) {
-        state.totalProblems++;
-        state.totalSolved++;   // 增加這行，對接模組
-        state.combo++;
-        state.perfectCorrect++;
-        if (state.combo > state.maxCombo) state.maxCombo = state.combo;
 
-        let earn = 1 + (0.1 * (state.combo - 1));
-        if (state.combo % 3 === 0) earn += 0.01 * Math.pow(2, (state.combo / 3) - 1);
-        state.score += earn;
+      if (isCorrect) {
+          const ts = (Date.now() - state.startTime) / 1000;
+          
+          // 呼叫通用引擎處理計分與統計
+          // 它會自動更新 state.score, state.combo, state.totalSolved, state.stats 等
+          const result = ScoringEngine.processCorrect(state, ts);
+        
+      //if (isCorrect) {
+        //state.totalProblems++;
+        //state.totalSolved++;   // 增加這行，對接模組
+        //state.combo++;
+        //state.perfectCorrect++;
+        //if (state.combo > state.maxCombo) state.maxCombo = state.combo;
+
+        //let earn = 1 + (0.1 * (state.combo - 1));
+        //if (state.combo % 3 === 0) earn += 0.01 * Math.pow(2, (state.combo / 3) - 1);
+        //state.score += earn;
 
         state.isCorrectFlash = true;
         render();
@@ -186,9 +202,12 @@
           ans: state.targetAngle,
           userAns: state.userAngle,
           status: true,
-          ts: (Date.now() - state.startTime) / 1000,
-          earn: earn,
-          keyLog: "" 
+          //ts: (Date.now() - state.startTime) / 1000,
+          //earn: earn,
+          //keyLog: "" 
+          ts: ts, 
+          earn: result.earn, 
+          keyLog: `attempts:${state.attempts}` // 紀錄嘗試次數
         };
         // 使用模組發送
         SyncProtocol.saveLog(SCRIPT_URL, state, p);
@@ -218,6 +237,10 @@
       state.lastAngle = newTarget; // 更新最後一次題目紀錄
       state.startTime = Date.now();
       state.userAngle = null;
+
+      // --- 重置引擎所需欄位 ---
+      state.attempts = 1;
+      state.hasModified = false;
       render();
     }
 
@@ -237,7 +260,16 @@
     }
 
     // 統一事件管理
-    const onStart = (e) => { if(state.mode === 'play') { state.isDown = true; handleInput(e); } };
+    // const onStart = (e) => { if(state.mode === 'play') { state.isDown = true; handleInput(e); } };
+    // 修改 onStart 來配合上面的邏輯
+    const onStart = (e) => { 
+      if(state.mode === 'play') { 
+        state.isDown = true; 
+        state.isDraggingInSameTurn = false; // 剛開始拖曳
+        handleInput(e); 
+      } 
+    };
+    
     const onMove = (e) => { if(state.isDown) { e.preventDefault(); handleInput(e); } };
     const onEnd = (e) => { 
       if (state.isDown) { 
