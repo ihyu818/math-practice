@@ -11,19 +11,22 @@ const UISummary = {
     let displaySymbol = ''; 
 
     try {
-        // 執行 atob 還原 index.html 傳來的 Base64 代碼
         const decoded = atob(sParam); 
-        
         if (decoded.includes('<svg')) {
-            // 成功還原！這就是您要的 SVG 代碼
             displaySymbol = decoded; 
+            // --- 加入下面這一行 ---
+            console.log("SVG 解碼成功！內容為：", displaySymbol); 
         } else {
             displaySymbol = decodeURIComponent(sParam);
         }
     } catch (e) {
-        // 如果報錯，代表傳的是文字 (如 ±)
+        console.error("解碼失敗，錯誤原因：", e);
         displaySymbol = decodeURIComponent(sParam);
     }
+
+
+
+
 
     // 以下新增
     // 1. 從 ScoringEngine 的標準格式提取數據
