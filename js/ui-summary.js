@@ -28,12 +28,6 @@ const UISummary = {
         console.error("解碼徹底失敗:", e);
     }
 
-
-
-
-    
-
-
     // 以下新增
     // 1. 從 ScoringEngine 的標準格式提取數據
     const solved = state.totalSolved || 0;       // 取代原本的 totalProblems
