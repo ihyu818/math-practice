@@ -8,24 +8,30 @@ const UISummary = {
     const sParam = params.get('s') || ''; 
 
     // 2. 核心解碼：這裡一定要確保變數名稱從頭到尾一致
+    // ui-summary.js 的解碼部分
     let displaySymbol = ''; 
-
     try {
-        const decoded = atob(sParam); 
+        // 1. 先處理可能的網址空格問題
+        const safeBase64 = sParam.replace(/\s/g, '+');
+        
+        // 2. 解碼
+        const decoded = atob(safeBase64); 
+        
         if (decoded.includes('<svg')) {
+            // 成功還原！
             displaySymbol = decoded; 
-            // --- 加入下面這一行 ---
-            console.log("SVG 解碼成功！內容為：", displaySymbol); 
         } else {
             displaySymbol = decodeURIComponent(sParam);
         }
     } catch (e) {
-        console.error("解碼失敗，錯誤原因：", e);
         displaySymbol = decodeURIComponent(sParam);
+        console.error("解碼徹底失敗:", e);
     }
 
 
 
+
+    
 
 
     // 以下新增
