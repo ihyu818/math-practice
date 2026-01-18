@@ -69,7 +69,7 @@ const UISummary = {
           
           <div class="w-20 h-20 mx-auto mb-6 flex items-center justify-center rounded-3xl text-4xl font-black shadow-inner" 
                style="background-color: var(--theme-bg-light, #eff6ff); color: var(--theme-color, #2563eb)">
-            ${symbol}
+            ${displaySymbol}
           </div>
           
           <div class="text-sm font-black italic uppercase text-slate-400 tracking-widest mb-1">Final Score</div>
