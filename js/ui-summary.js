@@ -5,7 +5,7 @@ const UISummary = {
 
     // 從網址抓取符號
     const params = new URLSearchParams(window.location.search);
-    const sParam = params.get('s') || 'Math'; 
+    const sParam = params.get('s') || 'Math Game'; 
 
     let displaySymbol;
     try {
