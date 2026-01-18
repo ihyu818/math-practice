@@ -7,6 +7,7 @@
   <title>廣義角實驗室 - Math Lab</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="js/session-manager.js?v=20260114"></script>
+  <script src="js/scoring-engine.js?v=20260114"></script>
   <script src="js/sync-protocol.js?v=20260114"></script>
   <style>
     :root { --fluid-text: clamp(2rem, 10vw, 4rem); }
@@ -172,16 +173,22 @@
       const isCorrect = (state.userAngle - state.targetAngle) % 360 === 0;
       
       if (isCorrect) {
-        state.totalProblems++;
-        state.combo++;
-        state.perfectCorrect++;
-        if (state.combo > state.maxCombo) state.maxCombo = state.combo;
+        // state.totalProblems++;
+        // state.combo++;
+        // state.perfectCorrect++;
+        //if (state.combo > state.maxCombo) state.maxCombo = state.combo;
 
-        let earn = 1 + (0.1 * (state.combo - 1));
-        if (state.combo % 3 === 0) earn += 0.01 * Math.pow(2, (state.combo / 3) - 1);
-        state.score += earn;
+        //let earn = 1 + (0.1 * (state.combo - 1));
+        //if (state.combo % 3 === 0) earn += 0.01 * Math.pow(2, (state.combo / 3) - 1);
+        //state.score += earn;
 
         state.isCorrectFlash = true;
+        const ts = (Date.now() - state.startTime) / 1000;
+
+        // --- 使用引擎處理統計與計分 ---
+        // 它會自動更新 state.score, state.combo, state.maxCombo, state.totalSolved 等
+        const result = ScoringEngine.processCorrect(state, ts);
+        
         render();
 
         // 準備傳輸包 p
@@ -190,8 +197,10 @@
           ans: state.targetAngle,
           userAns: state.userAngle,
           status: true,
-          ts: (Date.now() - state.startTime) / 1000,
-          earn: earn,
+          //ts: (Date.now() - state.startTime) / 1000,
+          ts: ts, 
+          //earn: earn,
+          earn: result.earn,
           keyLog: "" 
         };
         // 使用模組發送
@@ -203,6 +212,7 @@
           nextProblem();
         }, 300);
       } else {
+        // 如果答錯（放開的位置不對），引擎的規則是連擊中斷
         state.combo = 0;
         render();
       }
@@ -231,7 +241,10 @@
         if (state.timeLeft <= 0) {
           clearInterval(timer);
           state.mode = 'end';
-          state.accuracy = state.totalProblems > 0 ? ((state.perfectCorrect / state.totalProblems) * 100).toFixed(1) : "0.0";
+          // ScoringEngine 會更新 totalSolved 和 totalPerfect
+          state.accuracy = state.totalSolved > 0
+            ? ((state.totalPerfect / state.totalSolved) * 100).toFixed(1)
+            : "0.0";
           //fetch(`${SCRIPT_URL}?action=saveSummary&type=Angle&studentName=${encodeURIComponent(state.name)}&score=${state.score.toFixed(2)}&maxCombo=${state.maxCombo}`, { mode: 'no-cors' });
           // 使用模組發送總結
           SyncProtocol.saveSummary(SCRIPT_URL, state);
