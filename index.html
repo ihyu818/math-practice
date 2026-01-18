@@ -193,15 +193,13 @@
         if (svgElement) {
             // 移除所有換行 (\n) 與標籤間的多餘空格
             const minifiedSvg = svgElement.outerHTML.replace(/\n/g, '').replace(/>\s+</g, '><');
-            symbol = btoa(minifiedSvg); 
+            symbol = encodeURIComponent(btoa(minifiedSvg)); 
         } else {
           // 如果沒有 SVG，就抓取純文字 (如 ±, ( )( ))
           const symbolText = btn.innerText.trim() || "MATH";
           symbol = encodeURIComponent(symbolText);
         }
 
-        
-        
         // --- 4. 附加時間戳記並跳轉 ---
         const version = new Date().getTime(); 
         window.location.href = `${url}?v=${version}&c1=${c1}&c2=${c2}&s=${symbol}`;
