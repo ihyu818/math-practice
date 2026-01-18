@@ -62,7 +62,7 @@ const UISummary = {
       
           <div class="w-24 h-24 mx-auto mb-6 flex items-center justify-center rounded-3xl shadow-inner overflow-hidden p-3" 
                style="background-color: var(--theme-bg-light, #eff6ff); color: var(--theme-color, #2563eb)">
-            <div class="w-full h-full flex items-center justify-center text-5xl font-black italic">
+            <div class="w-full h-full flex items-center justify-center text-5xl font-black">
               ${displaySymbol}
             </div>
           </div>
