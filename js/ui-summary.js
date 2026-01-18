@@ -7,6 +7,7 @@ const UISummary = {
     const params = new URLSearchParams(window.location.search);
     const sParam = params.get('s') || 'Math Game'; 
 
+    /*
     let displaySymbol;
     try {
         // 1. 嘗試用 atob 解碼（針對 Base64 的 SVG）
@@ -23,6 +24,23 @@ const UISummary = {
         // 2. 如果 atob 報錯，代表它不是 Base64（是普通文字如 ±）
         displaySymbol = decodeURIComponent(sParam);
     }
+    */
+
+    let displaySymbol = decodeURIComponent(sParam); // 預設先做一次網址解碼
+    
+    try {
+        // 檢查是否看起來像 Base64 (不含特殊字元且長度適中)
+        if (sParam.length > 20) { 
+            const decoded = atob(sParam);
+            if (decoded.includes('<svg')) {
+                displaySymbol = decoded; // 只有確定是 SVG 才替換
+            }
+        }
+    } catch (e) {
+        // 解碼失敗（例如 addsub 的 ±），displaySymbol 維持 decodeURIComponent 的結果
+    }
+
+
     
     // 以下新增
     // 1. 從 ScoringEngine 的標準格式提取數據
@@ -79,13 +97,6 @@ const UISummary = {
           <div class="text-lg font-bold text-slate-500 mb-8">${state.name}</div>
           
           <div class="space-y-4 text-left bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
-
-            ${false ? ` 以下為刪除代碼
-            <div class="flex justify-between items-center">
-              <span class="text-slate-400 font-bold text-sm">總答題數</span>
-              <span class="text-slate-800 font-black text-2xl">${state.totalProblems}</span>
-            </div>
-            ` : ''}
             
             <div class="flex justify-between items-center">
               <span class="text-slate-400 font-bold text-sm">總答題數</span>
@@ -96,25 +107,11 @@ const UISummary = {
               <span class="text-slate-400 font-bold text-sm">最高連擊</span>
               <span class="text-orange-500 font-black text-2xl">${state.maxCombo}</span>
             </div>
-
-            ${false ? ` 以下為刪除代碼
-            <div class="flex justify-between items-center">
-              <span class="text-slate-400 font-bold text-sm">一次到位率</span>
-              <span class="text-slate-800 font-black text-2xl">${accuracy}%</span>
-            </div>
-            ` : ''}
             
             <div class="flex justify-between items-center">
               <span class="text-slate-400 font-bold text-sm">一次到位率</span>
               <span class="text-slate-800 font-black text-2xl">${accuracy}%</span>
             </div>
-
-            ${false ? ` 以下為刪除代碼
-            <div class="flex justify-between items-center">
-              <span class="text-slate-400 font-bold text-sm">平均答對速度</span>
-              <span class="font-black text-2xl" style="color: var(--theme-color, #2563eb)">${avgSpeed} <small class="text-xs">s</small></span>
-            </div>
-            ` : ''}
 
             <div class="flex justify-between items-center">
               <span class="text-slate-400 font-bold text-sm">平均答對速度</span>
