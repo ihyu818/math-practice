@@ -47,7 +47,6 @@ const UISummary = {
         
     container.innerHTML = `
       <div class="min-h-screen flex items-center justify-center p-4 bg-slate-100 relative overflow-hidden">
-        
         <div class="absolute top-6 left-6 flex flex-col gap-2 z-10">
           <button onclick="location.reload()" 
                   class="flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur shadow-sm border border-slate-200 rounded-xl text-sm font-black text-slate-700 active:scale-95 transition-all">
@@ -58,14 +57,16 @@ const UISummary = {
             Home
           </button>
         </div>
-
-        <div class="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-sm text-center border-b-[12px]" style="border-color: var(--theme-color, #2563eb)">
-          
-          <div class="w-20 h-20 mx-auto mb-6 flex items-center justify-center rounded-3xl" 
-              style="background-color: var(--theme-bg-light); color: var(--theme-color)">
-            ${displaySymbol} 
-          </div>
     
+        <div class="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-sm text-center border-b-[12px] relative z-20" style="border-color: var(--theme-color, #2563eb)">
+      
+          <div class="w-24 h-24 mx-auto mb-6 flex items-center justify-center rounded-3xl shadow-inner overflow-hidden p-3" 
+               style="background-color: var(--theme-bg-light, #eff6ff); color: var(--theme-color, #2563eb)">
+            <div class="w-full h-full flex items-center justify-center text-5xl font-black italic">
+              ${displaySymbol}
+            </div>
+          </div>
+
           <div class="text-sm font-black italic uppercase text-slate-400 tracking-widest mb-1">Final Score</div>
           <div class="text-6xl font-black mb-2 break-all leading-none" style="color: var(--theme-color, #2563eb)">
             ${state.score.toFixed(2)}
