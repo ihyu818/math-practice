@@ -37,8 +37,15 @@
       isDown: false,
       startTime: 0,
       score: 0, combo: 0, maxCombo: 0, timeLeft: TOTAL_TIME,
-      totalProblems: 0, perfectCorrect: 0,
-      accuracy: 0, isCorrectFlash: false, isDown: false
+      // totalProblems: 0, perfectCorrect: 0,
+      // --- 引擎必備屬性 ---
+      totalSolved: 0,
+      totalPerfect: 0,
+      hasModified: false,  // 關鍵：廣義角預設為 false (因為沒有 Backspace)
+      attempts: 1,         // 關鍵：預設為 1
+      stats: { totalTime: 0, perfectTime: 0, correctedTime: 0 },
+      // ------------------
+      accuracy: 0, isCorrectFlash: false
     };
 
     let timer = null;
