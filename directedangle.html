@@ -55,12 +55,13 @@
 
     function render() {
       const app = document.getElementById('app');
+      if (!app) return; // 安全檢查
     
       if (state.mode === 'end') {
         // 確保 app 容器是空的，讓 UISummary 好好渲染
         app.innerHTML = "";
         UISummary.render('app', state);
-        return;
+        return; // 關鍵：一定要 return，不要執行後面的 UIHeader 和 drawCircle
       }
       
       // 使用與 addsub.html 相同的父層容器 class
