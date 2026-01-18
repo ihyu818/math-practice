@@ -195,37 +195,16 @@
       if (isCorrect) {
         const ts = (Date.now() - state.startTime) / 1000;
         // 重點：如果這題是第一次「放開」就對，才算 Perfect
-        if (state.attempts === 1) {
-          state.totalPerfect = (state.totalPerfect || 0) + 1;
-        }
-      /*
-      if (isCorrect) {
-          const ts = (Date.now() - state.startTime) / 1000;
-          // 呼叫通用引擎處理計分與統計
-          // 它會自動更新 state.score, state.combo, state.totalSolved, state.stats 等
-          const result = ScoringEngine.processCorrect(state, ts);
-        state.isCorrectFlash = true;
-        render();
-        // 準備傳輸包 p
-        const p = {
-          problem: state.targetAngle + "°",
-          ans: state.targetAngle,
-          userAns: state.userAngle,
-          status: true,
-          //ts: (Date.now() - state.startTime) / 1000,
-          //earn: earn,
-          //keyLog: "" 
-          ts: ts, 
-          earn: result.earn, 
-          keyLog: `attempts:${state.attempts}` // 紀錄嘗試次數
-        };
-        */
+        //if (state.attempts === 1) {
+        //  state.totalPerfect = (state.totalPerfect || 0) + 1;
+        //}
  
         // 呼叫引擎處理分數與 MaxCombo
         const result = ScoringEngine.processCorrect(state, ts);
         
         state.isCorrectFlash = true;
         render();
+ 
         const p = {
           problem: state.targetAngle + "°",
           ans: state.targetAngle,
