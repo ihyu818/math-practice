@@ -180,45 +180,45 @@
       render();
     }
 
-function checkAnswer() {
-      // 1. 安全檢查：確保分子分母都有輸入，且分母有效
-      if (state.num === "" || state.den === "" || state.den === "0" || state.den === "-") return;
-
-      // 2. 數值轉換與判定
+    function checkAnswer(isManual = false) {
+      // 1. 基本安全檢查：分子分母不能為空，且不能只有負號
+      if (state.num === "" || state.num === "-" || state.den === "" || state.den === "-" || state.den === "0") {
+        return;
+      }
+    
+      // 2. 數值轉換：parseFloat 會自動處理負號
       const userVal = parseFloat(state.num) / parseFloat(state.den);
-      const isCorrect = Math.abs(userVal - state.problem.target) < 0.001;
       
+      // 3. 與目標值比對 (允許極小誤差以應對浮點數運算)
+      const isCorrect = Math.abs(userVal - state.problem.target) < 0.001;
+    
       if (isCorrect) {
         state.isCorrectFlash = true;
         const ts = (Date.now() - state.startTime) / 1000;
         
-        // 呼叫引擎處理分數 (確保這行沒報錯)
         if (typeof ScoringEngine !== 'undefined') {
           ScoringEngine.processCorrect(state, ts);
         }
-
-        // 儲存紀錄
+    
         SyncProtocol.saveLog(SCRIPT_URL, state, { 
           problem: `${state.problem.type}(${state.problem.x},${state.problem.y})`, 
           userAns: `${state.num}/${state.den}` 
         });
-
-        // 3. 延遲後執行下一題並重置輸入狀態
+    
+        // 答對後自動跳題的延遲
         setTimeout(() => {
           state.isCorrectFlash = false;
-          state.num = ""; // 清空分子
-          state.den = ""; // 清空分母
-          state.activeField = 'num'; // 游標跳回分子
-          nextProblem(); // 產生新題目
-        }, 500);
+          nextProblem(); // nextProblem 必須重置 num, den 和 activeField
+        }, 400);
       } else {
-        // 答錯時的處理
-        state.combo = 0;
-        state.isCorrectFlash = false;
-        state.num = ""; 
-        state.den = ""; 
-        state.activeField = 'num';
-        render();
+        // 如果是手動按 Enter 且不正確，才執行罰則（如清空或中斷 Combo）
+        if (isManual) {
+          state.combo = 0;
+          state.num = ""; 
+          state.den = ""; 
+          state.activeField = 'num';
+          render();
+        }
       }
     }
         
