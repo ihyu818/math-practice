@@ -19,6 +19,14 @@
     #timer-bar { transition: width 1s linear; }
     .correct-flash { animation: flash 0.4s ease-out; }
     @keyframes flash { 0% { background-color: transparent; } 50% { background-color: #dbeafe; } 100% { background-color: transparent; } }
+
+    canvas { 
+      touch-action: none; 
+      user-select: none; 
+      -webkit-tap-highlight-color: transparent;
+      /* 新增：確保瀏覽器不把拖曳誤判為滑動翻頁 */
+      overscroll-behavior: contain; 
+    }
   </style>
 </head>
 <body class="text-slate-800 font-sans">
@@ -174,6 +182,15 @@
       const rect = canvas.getBoundingClientRect();
       const t = e.touches ? e.touches[0] : e;
 
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      
+      // 考慮捲動偏移量
+      state.userAngle = snapAngle(
+        clientX - rect.left, 
+        clientY - rect.top
+      );
+      
       // 計算座標並更新 state
       const newAngle = snapAngle(t.clientX - rect.left, t.clientY - rect.top);
       // 只有當角度真的改變時才觸發重繪，節省效能
@@ -293,6 +310,14 @@
       } 
     };
 
+    // 1. 取得 Canvas 元素 (放在事件監聽之前)
+    const canvasElement = document.getElementById('angleCanvas');
+    // 2. 針對手指觸摸 (touchstart / touchmove) 綁定到 canvasElement 上
+    // 使用 { passive: false } 是解決手機卡頓、無法阻止捲動的核心關鍵
+    canvasElement.addEventListener('touchstart', onStart, { passive: false });
+    canvasElement.addEventListener('touchmove', onMove, { passive: false });
+    canvasElement.addEventListener('touchend', onEnd);
+    
     window.addEventListener('mousedown', onStart);
     window.addEventListener('touchstart', onStart, {passive: false});
     window.addEventListener('mousemove', onMove);
