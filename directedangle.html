@@ -205,17 +205,16 @@
       const isCorrect = (state.userAngle - state.targetAngle) % 360 === 0;
 
       if (isCorrect) {
-        const ts = (Date.now() - state.startTime) / 1000;
-        // 重點：如果這題是第一次「放開」就對，才算 Perfect
-        //if (state.attempts === 1) {
-        //  state.totalPerfect = (state.totalPerfect || 0) + 1;
-        //}
- 
-        // 呼叫引擎處理分數與 MaxCombo
-        const result = ScoringEngine.processCorrect(state, ts);
+        const ts = (Date.now() - state.startTime) / 1000; 
+        const result = ScoringEngine.processCorrect(state, ts); // 呼叫引擎處理分數與 MaxCombo
+
+        // 1. 不要整頁 render，只手動更新 UIHeader 的分數
+        UIHeader.render('header-area', state);
+        // 2. 透過加入 CSS class 來實現閃爍，不要重繪 HTML
+        document.querySelector('.game-container').classList.add('correct-flash');
         
         state.isCorrectFlash = true;
-        render();
+        //render();
  
         const p = {
           problem: state.targetAngle + "°",
@@ -230,6 +229,17 @@
         SyncProtocol.saveLog(SCRIPT_URL, state, p);
 
         setTimeout(() => {
+          document.querySelector('.game-container').classList.remove('correct-flash');
+          state.isCorrectFlash = false;
+          nextProblem();
+        }, 300);
+      } else {
+        state.attempts++; 
+        state.combo = 0;
+        UIHeader.render('header-area', state); // 只更新分數條
+      }
+      /*
+      setTimeout(() => {
           state.isCorrectFlash = false;
           nextProblem();
         }, 300);
@@ -238,7 +248,7 @@
         state.attempts++; 
         state.combo = 0; 
         render();
-      }
+      }*/
     }
     
     function nextProblem() {
