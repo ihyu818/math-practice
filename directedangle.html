@@ -238,20 +238,9 @@
         state.combo = 0;
         UIHeader.render('header-area', state); // 只更新分數條
       }
-      /*
-      setTimeout(() => {
-          state.isCorrectFlash = false;
-          nextProblem();
-        }, 300);
-      } else {
-        // 【重點】只要放開時不正確，嘗試次數才 +1，連擊中斷
-        state.attempts++; 
-        state.combo = 0; 
-        render();
-      }*/
     }
     
-    function nextProblem() {
+    function nextProblem(needFullRender = false) {
       // const pool = [...specialAngles, ...specialAngles.map(a => a - 360)];
       const pool = specialAngles;
       let newTarget;
@@ -265,11 +254,22 @@
       state.lastAngle = newTarget; // 更新最後一次題目紀錄
       state.startTime = Date.now();
       state.userAngle = null;
-
       // --- 重置引擎所需欄位 ---
       state.attempts = 1;
       state.hasModified = false;
-      render();
+
+      // 2. 聰明的更新策略
+      const targetDisplay = document.querySelector('.font-black.text-slate-800');
+      if (!needFullRender && targetDisplay) {
+        // 情況 A：遊戲進行中，只更新題目文字和清空指針
+        targetDisplay.innerText = `${state.targetAngle}°`;
+        drawPointer(); 
+        // 同時更新 Header 的進度條或分數 (如果有需要)
+        UIHeader.render('header-area', state);
+      } else {
+        // 情況 B：遊戲剛啟動，或是找不到顯示元素時，才執行昂貴的整頁渲染
+        render();
+      }
     }
 
     function startTimer() {
