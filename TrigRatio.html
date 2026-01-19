@@ -180,25 +180,48 @@
       render();
     }
 
-    function checkAnswer() {
-      if (!state.num || !state.den || state.den === "0" || state.den === "-") return;
-      
+function checkAnswer() {
+      // 1. 安全檢查：確保分子分母都有輸入，且分母有效
+      if (state.num === "" || state.den === "" || state.den === "0" || state.den === "-") return;
+
+      // 2. 數值轉換與判定
       const userVal = parseFloat(state.num) / parseFloat(state.den);
       const isCorrect = Math.abs(userVal - state.problem.target) < 0.001;
-
+      
       if (isCorrect) {
         state.isCorrectFlash = true;
         const ts = (Date.now() - state.startTime) / 1000;
-        ScoringEngine.processCorrect(state, ts);
-        SyncProtocol.saveLog(SCRIPT_URL, state, { problem: `${state.problem.type}(${state.problem.x},${state.problem.y})`, userAns: `${state.num}/${state.den}` });
-        setTimeout(() => { state.isCorrectFlash = false; nextProblem(); }, 500);
+        
+        // 呼叫引擎處理分數 (確保這行沒報錯)
+        if (typeof ScoringEngine !== 'undefined') {
+          ScoringEngine.processCorrect(state, ts);
+        }
+
+        // 儲存紀錄
+        SyncProtocol.saveLog(SCRIPT_URL, state, { 
+          problem: `${state.problem.type}(${state.problem.x},${state.problem.y})`, 
+          userAns: `${state.num}/${state.den}` 
+        });
+
+        // 3. 延遲後執行下一題並重置輸入狀態
+        setTimeout(() => {
+          state.isCorrectFlash = false;
+          state.num = ""; // 清空分子
+          state.den = ""; // 清空分母
+          state.activeField = 'num'; // 游標跳回分子
+          nextProblem(); // 產生新題目
+        }, 500);
       } else {
+        // 答錯時的處理
         state.combo = 0;
-        state.num = ""; state.den = ""; state.activeField = 'num'; // 錯了清空重新輸入
+        state.isCorrectFlash = false;
+        state.num = ""; 
+        state.den = ""; 
+        state.activeField = 'num';
         render();
       }
     }
-
+        
     function startTimer() {
       const t = setInterval(() => {
         state.timeLeft--;
