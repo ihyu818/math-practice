@@ -110,7 +110,9 @@
 
       // C. 繪製特殊角虛線 (淺綠色)(磁吸點提示)
       ctx.setLineDash([4, 6]);
-      ctx.strokeStyle = '#dcfce7'; 
+      ctx.lineWidth = 2;           // <--- 新增這一行：加粗線條（原本預設通常是 1）
+      // ctx.strokeStyle = '#dcfce7'; 
+      ctx.strokeStyle = '#bbf7d0'; // <--- 修改顏色：改用稍微深一點的嫩綠色 (或用 #86efac)
       specialAngles.forEach(deg => {
         const rad = deg * Math.PI / 180;
         ctx.beginPath();
@@ -118,6 +120,9 @@
         ctx.lineTo(cx + r * Math.cos(rad), cy - r * Math.sin(rad));
         ctx.stroke();
       });
+
+
+
       
       // D. 繪製主指針 (深綠色)
       if (state.userAngle !== null) { // 只有非空值才畫
