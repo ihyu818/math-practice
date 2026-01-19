@@ -112,50 +112,48 @@
       const { x, y, r } = state.problem;
       const px = cx + (x / r) * r_visual;
       const py = cy - (y / r) * r_visual;
-
+    
       ctx.clearRect(0, 0, 400, 400);
       
-      // 坐標軸
+      // 1. 繪製坐標軸
       ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(cx, 20); ctx.lineTo(cx, 380); ctx.moveTo(20, cy); ctx.lineTo(380, cy); ctx.stroke();
-
-      // 參考三角形 (垂線)
+    
+      // 2. 繪製參考三角形 (垂線)
       ctx.setLineDash([6, 4]); ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, cy); ctx.stroke();
-
-      // 弧形箭頭與 θ 標記
-      const angleRad = Math.atan2(y, x);
-      const drawAngle = -angleRad; // Canvas 順時針為正
+    
+      // 3. 繪製弧形箭頭 (theta) - 核心修改處
+      let angleRad = Math.atan2(-y, x); // Canvas y軸向下，故帶負號取得數學座標系的弧度
+      if (angleRad > 0) angleRad -= Math.PI * 2; // 強制取得逆時針方向的角度值 (負值)
+    
       const arcRadius = 45;
-
       ctx.setLineDash([]); ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2.5;
       ctx.beginPath();
-      // 從 0 度繪製到終邊角
-      ctx.arc(cx, cy, arcRadius, 0, drawAngle, angleRad < 0);
+      // 從 0 度 (3點鐘方向) 開始，逆時針繪製到目標角度
+      ctx.arc(cx, cy, arcRadius, 0, angleRad, true); 
       ctx.stroke();
-
-      // 繪製箭頭
+    
+      // 4. 繪製箭頭末端
       const arrowSize = 8;
-      const headAngle = angleRad < 0 ? drawAngle - 0.2 : drawAngle + 0.2;
+      const headAngle = angleRad; 
+      // 計算箭頭兩側的點
       ctx.beginPath();
-      ctx.moveTo(cx + arcRadius * Math.cos(drawAngle), cy + arcRadius * Math.sin(drawAngle));
-      ctx.lineTo(cx + (arcRadius-arrowSize) * Math.cos(headAngle), cy + (arcRadius-arrowSize) * Math.sin(headAngle));
+      ctx.moveTo(cx + arcRadius * Math.cos(headAngle), cy + arcRadius * Math.sin(headAngle));
+      ctx.lineTo(cx + (arcRadius - arrowSize) * Math.cos(headAngle + 0.3), cy + (arcRadius - arrowSize) * Math.sin(headAngle + 0.3));
       ctx.stroke();
-
-      // 標記 θ 字樣
-      const labelRadius = arcRadius + 20;
-      const midAngle = drawAngle / 2;
-      ctx.fillStyle = '#1d4ed8'; ctx.font = 'bold 20px Playfair Display';
-      ctx.fillText('θ', cx + labelRadius * Math.cos(midAngle) - 5, cy + labelRadius * Math.sin(midAngle) + 5);
-
-      // 終邊
+    
+      // 5. 標記 θ 字樣 - 根據角度中點放置
+      const labelRadius = arcRadius + 25;
+      const midAngle = angleRad / 2;
+      ctx.fillStyle = '#1d4ed8'; ctx.font = 'bold 22px Playfair Display';
+      ctx.fillText('θ', cx + labelRadius * Math.cos(midAngle) - 5, cy + labelRadius * Math.sin(midAngle) + 8);
+    
+      // 6. 繪製終邊與 P 點
       ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 5; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, py); ctx.stroke();
-
-      // P點圓點
       ctx.fillStyle = '#15803d'; ctx.beginPath(); ctx.arc(px, py, 7, 0, Math.PI * 2); ctx.fill();
     }
-
     function handleKey(k) {
       if (k === 'DEL') {
         if (state[state.activeField] === "" && state.activeField === 'den') {
