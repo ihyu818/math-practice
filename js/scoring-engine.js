@@ -85,7 +85,7 @@ const ScoringEngine = {
    * 3. 核心加分公式演算法
    */
   calculateEarn: (combo, hasModified) => {
-    if (hasModified) return 1.0; // 有修正過，固定給 1.0 分
+    if (combo === 0) return 1.0; // 有修正過，combo歸零，固定給 1.0 分
     
     // 基礎分 1.0 + 連擊加乘 (每 1 combo + 0.1)
     let earn = 1 + (0.1 * (combo - 1));
