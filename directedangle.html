@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
+  <title>廣義角實驗室 - Math Lab</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/session-manager.js?v=20260114"></script>
+  <script src="js/scoring-engine.js?v=20260114"></script>
+  <script src="js/ui-header.js?v=20260114"></script>
+  <script src="js/ui-summary.js?v=20260114"></script>
+  <script src="js/sync-protocol.js?v=20260114"></script>
+  <style>
+    :root { --fluid-text: clamp(2rem, 10vw, 4rem); }
+    body { background-color: #f8fafc; overflow: hidden; touch-action: none; }
+    canvas { touch-action: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+    .score-box { border: 1px solid #f1f5f9; }
+    #timer-bar { transition: width 1s linear; }
+    .correct-flash { animation: flash 0.4s ease-out; }
+    @keyframes flash { 0% { background-color: transparent; } 50% { background-color: #dbeafe; } 100% { background-color: transparent; } }
+
+    canvas { 
+      touch-action: none; 
+      user-select: none; 
+      -webkit-tap-highlight-color: transparent;
+      /* 新增：確保瀏覽器不把拖曳誤判為滑動翻頁 */
+      overscroll-behavior: contain; 
+    }
+  </style>
+</head>
+<body class="text-slate-800 font-sans">
+  <div id="app"></div>
+
+  <script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5SPY0XNjPWaRAgSmSZx1cSgTTeuACaT17Lx96Oy0TkALO0mgOKA-mr3KuUtFCNVir2Q/exec'; 
+    const TOTAL_TIME = 120;
+    
+    let state = {
+      mode: 'play',
+      sessionId: SessionManager.getSessionId(),// 呼叫模組產生 ID
+      name: SessionManager.getName(),         // 呼叫模組抓名字
+      gameType: 'directedAngle',
+      targetAngle: null,
+      lastAngle: null, // 用於防重複
+      userAngle: null, 
+      isDown: false,
+      startTime: 0,
+      score: 0, combo: 0, maxCombo: 0, timeLeft: TOTAL_TIME,
+      // 2. 補上引擎所需的統計欄位 (對接 ScoringEngine)
+      totalSolved: 0,
+      totalPerfect: 0,
+      totalCorrected: 0, // 新增：用於統計修正過才對的題目
+      attempts: 1,       // 廣義角預設為 1，除非您之後想加入「點擊確認」機制
+      hasModified: false, // 在廣義角中，如果使用者拖曳過程中手放開又重抓，可視為修正（見下文建議）
+      stats: { totalTime: 0, perfectTime: 0, correctedTime: 0 },
+
+      isCorrectFlash: false      
+    };
+
+    let timer = null;
+    const specialAngles = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330];
+
+
+    function render() {
+      const app = document.getElementById('app');
+      if (!app) return; // 安全檢查
+    
+      if (state.mode === 'end') {
+        // 確保 app 容器是空的，讓 UISummary 好好渲染
+        app.innerHTML = "";
+        UISummary.render('app', state);
+        return; // 關鍵：一定要 return，不要執行後面的 UIHeader 和 drawCircle
+      }
+      
+      // 使用與 addsub.html 相同的父層容器 class
+      app.innerHTML = `
+        <div class="min-h-screen p-4 flex flex-col items-center max-w-6xl mx-auto game-container ${state.isCorrectFlash ? 'correct-flash' : ''}">
+            <div class="side-info w-full text-center">
+              <div id="header-area"></div>
+
+              <div class="mt-8 mb-2 text-slate-400 font-bold tracking-widest uppercase text-sm">
+                找出標準位置角 <span class="italic serif-math text-lg">θ</span> 的終邊位置
+              </div>
+              <div class="font-black text-slate-800 mb-6 italic" style="font-size: var(--fluid-text)">${state.targetAngle}°</div>
+              
+              <div class="flex justify-center">
+                <canvas id="angleCanvas" width="360" height="360" class="max-w-full h-auto"></canvas>
+              </div>
+            </div>
+        </div>`;
+
+      UIHeader.render('header-area', state);
+      drawCircle();
+    }
+
+    function drawCircle() {
+      const canvas = document.getElementById('angleCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const cx = 180, cy = 180, r = 165; // 稍微調整半徑讓圓周更美觀
+
+      ctx.clearRect(0, 0, 360, 360);
+
+      // A. 繪製圓周 (新增)
+      ctx.setLineDash([]);
+      ctx.strokeStyle = '#86efac'; // 中綠色
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.stroke();
+      
+      // B. 繪製座標軸 (調淡顏色)
+      ctx.setLineDash([]);
+      ctx.strokeStyle = '#f1f5f9';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, 0); ctx.lineTo(cx, 360);
+      ctx.moveTo(0, cy); ctx.lineTo(360, cy);
+      ctx.stroke();
+
+      // C. 繪製特殊角虛線 (淺綠色)(磁吸點提示)
+      ctx.setLineDash([4, 6]);
+      ctx.lineWidth = 2;           // <--- 新增這一行：加粗線條（原本預設通常是 1）
+      // ctx.strokeStyle = '#dcfce7'; 
+      ctx.strokeStyle = '#bbf7d0'; // <--- 修改顏色：改用稍微深一點的嫩綠色 (或用 #86efac)
+      specialAngles.forEach(deg => {
+        const rad = deg * Math.PI / 180;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + r * Math.cos(rad), cy - r * Math.sin(rad));
+        ctx.stroke();
+      });
+      
+      // D. 繪製主指針 (深綠色)
+      if (state.userAngle !== null) { // 只有非空值才畫
+        const userRad = state.userAngle * Math.PI / 180;
+        ctx.setLineDash([]);
+        ctx.shadowBlur = 10;  // 原本為15
+        ctx.shadowColor = 'rgba(21, 128, 61, 0.2)';
+        ctx.strokeStyle = '#15803d'; // 深綠
+        ctx.lineWidth = 8;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + r * Math.cos(userRad), cy - r * Math.sin(userRad));
+        ctx.stroke();
+      }
+
+      // E. 繪製圓心 (深綠)(圓心永遠畫出來，代表原點)
+      ctx.fillStyle = '#166534'; 
+      ctx.shadowBlur = 0;
+      ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI * 2); ctx.fill();
+  }
+
+    function snapAngle(x, y) {
+      const dx = x - 180;
+      const dy = 180 - y;
+      let deg = Math.atan2(dy, dx) * 180 / Math.PI;
+      if (deg < 0) deg += 360;
+      // 修正邏輯：考慮到 360 度與 0 度是重合的
+      return specialAngles.reduce((prev, curr) => {
+        // 計算當前角度與目標的最小夾角距離
+        const getDist = (a, b) => {
+          const d = Math.abs(a - b) % 360;
+          return d > 180 ? 360 - d : d;
+        };
+        return getDist(curr, deg) < getDist(prev, deg) ? curr : prev;
+      });
+    }
+
+    function handleInput(e) {
+      if (state.mode !== 'play') return;
+
+      // 1. 立即阻止瀏覽器原生滾動 (非常重要！)
+      if (e.cancelable) e.preventDefault();
+      
+      const canvas = document.getElementById('angleCanvas');
+      const rect = canvas.getBoundingClientRect();
+      const t = e.touches ? e.touches[0] : e;
+      
+      // 計算座標並更新 state
+      const newAngle = snapAngle(t.clientX - rect.left, t.clientY - rect.top);
+      // 只有當角度真的改變時才觸發重繪，節省效能
+      //if (state.userAngle !== newAngle) {
+        //state.userAngle = newAngle;
+
+      // 3. 更新狀態並立即重繪
+      state.userAngle = newAngle;
+
+        // 使用 requestAnimationFrame 確保繪圖順暢
+        requestAnimationFrame(drawCircle);
+      }
+    }
+    
+    
+    function checkAnswer() {
+      // 如果已經在閃爍（代表剛答對），就直接跳出，不重複計算
+      if (state.isCorrectFlash || state.userAngle === null) return;
+      // 同界角判定：((user - target) % 360) === 0
+      const isCorrect = (state.userAngle - state.targetAngle) % 360 === 0;
+
+      if (isCorrect) {
+        const ts = (Date.now() - state.startTime) / 1000;
+        // 重點：如果這題是第一次「放開」就對，才算 Perfect
+        //if (state.attempts === 1) {
+        //  state.totalPerfect = (state.totalPerfect || 0) + 1;
+        //}
+ 
+        // 呼叫引擎處理分數與 MaxCombo
+        const result = ScoringEngine.processCorrect(state, ts);
+        
+        state.isCorrectFlash = true;
+        render();
+ 
+        const p = {
+          problem: state.targetAngle + "°",
+          ans: state.targetAngle,
+          userAns: state.userAngle,
+          status: true,
+          ts: ts, 
+          earn: result.earn, 
+          keyLog: `attempts:${state.attempts}` 
+        };
+        // 使用模組發送
+        SyncProtocol.saveLog(SCRIPT_URL, state, p);
+
+        setTimeout(() => {
+          state.isCorrectFlash = false;
+          nextProblem();
+        }, 300);
+      } else {
+        // 【重點】只要放開時不正確，嘗試次數才 +1，連擊中斷
+        state.attempts++; 
+        state.combo = 0; 
+        render();
+      }
+    }
+    
+    function nextProblem() {
+      // const pool = [...specialAngles, ...specialAngles.map(a => a - 360)];
+      const pool = specialAngles;
+      let newTarget;
+      
+      // 防重複機制：如果抽到跟上次一樣的角度，就重抽
+      do {
+        newTarget = pool[Math.floor(Math.random() * pool.length)];
+      } while (newTarget === state.lastAngle);
+      
+      state.targetAngle = newTarget;
+      state.lastAngle = newTarget; // 更新最後一次題目紀錄
+      state.startTime = Date.now();
+      state.userAngle = null;
+
+      // --- 重置引擎所需欄位 ---
+      state.attempts = 1;
+      state.hasModified = false;
+      render();
+    }
+
+    function startTimer() {
+      timer = setInterval(() => {
+        state.timeLeft--;
+        if (state.timeLeft <= 0) {
+          clearInterval(timer);
+          state.mode = 'end';
+          state.accuracy = state.totalProblems > 0 ? ((state.perfectCorrect / state.totalProblems) * 100).toFixed(1) : "0.0";
+          //fetch(`${SCRIPT_URL}?action=saveSummary&type=Angle&studentName=${encodeURIComponent(state.name)}&score=${state.score.toFixed(2)}&maxCombo=${state.maxCombo}`, { mode: 'no-cors' });
+          // 使用模組發送總結
+          SyncProtocol.saveSummary(SCRIPT_URL, state);
+        }
+        render();
+      }, 1000);
+    }
+
+    // 統一事件管理
+    // const onStart = (e) => { if(state.mode === 'play') { state.isDown = true; handleInput(e); } };
+    // 修改 onStart 來配合上面的邏輯
+    const onStart = (e) => { 
+      if(state.mode === 'play') { 
+        state.isDown = true; 
+        state.isDraggingInSameTurn = false; // 剛開始拖曳
+        handleInput(e); 
+      } 
+    };
+    
+    const onMove = (e) => { if(state.isDown) { e.preventDefault(); handleInput(e); } };
+    const onEnd = (e) => { 
+      if (state.isDown) { 
+        // 1. 如果是拖曳結束，最後一次抓取當前手指放開的位置
+        if (e.changedTouches && e.changedTouches.length > 0) {
+          handleInput(e.changedTouches[0]);
+        } else if (e.clientX !== undefined) {
+          handleInput(e);
+        }
+
+        // 2. 阻止虛擬事件
+        if (e && e.cancelable) e.preventDefault(); 
+        
+        state.isDown = false; 
+        checkAnswer(); 
+      } 
+    };
+    
+    window.addEventListener('mousedown', onStart);
+    window.addEventListener('touchstart', onStart, {passive: false});
+    window.addEventListener('mousemove', onMove, {passive: false});
+    window.addEventListener('touchmove', onMove, {passive: false});
+    window.addEventListener('mouseup', onEnd);
+    window.addEventListener('touchend', onEnd);
+
+    // 移除 window.onload，回歸與 addsub 一致的「直接啟動」模式
+    UIHeader.initTheme(); 
+    nextProblem(); 
+    startTimer(); 
+    render();
+  </script>
+</body>
+</html>
