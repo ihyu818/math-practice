@@ -167,38 +167,23 @@
       });
     }
 
-
-    /*
     function handleInput(e) {
       if (state.mode !== 'play') return;
+      
+      const canvas = document.getElementById('angleCanvas');
+      const rect = canvas.getBoundingClientRect();
+      const t = e.touches ? e.touches[0] : e;
 
-      // 如果使用者在同一題內「重新開始觸摸」，視為嘗試修正
-      if (state.isDown && state.userAngle !== null && !state.isDraggingInSameTurn) {
-          state.hasModified = true;
-          state.attempts++;
-          state.isDraggingInSameTurn = true; // 標記目前正在這一次拖曳中
+      // 計算座標並更新 state
+      const newAngle = snapAngle(t.clientX - rect.left, t.clientY - rect.top);
+      // 只有當角度真的改變時才觸發重繪，節省效能
+      if (state.userAngle !== newAngle) {
+        state.userAngle = newAngle;
+        // 使用 requestAnimationFrame 確保繪圖順暢
+        requestAnimationFrame(drawCircle);
       }
-      
-      const canvas = document.getElementById('angleCanvas');
-      const rect = canvas.getBoundingClientRect();
-      const t = e.touches ? e.touches[0] : e;
-      state.userAngle = snapAngle(t.clientX - rect.left, t.clientY - rect.top);
-      drawCircle();
-    }*/
-
-    function handleInput(e) {
-      if (state.mode !== 'play') return;
-      
-      const canvas = document.getElementById('angleCanvas');
-      const rect = canvas.getBoundingClientRect();
-      const t = e.touches ? e.touches[0] : e;
-      
-      // 只更新角度並繪圖，不要在這裡加 attempts
-      state.userAngle = snapAngle(t.clientX - rect.left, t.clientY - rect.top);
-      drawCircle();
     }
-
-
+    
     
     function checkAnswer() {
       // 如果已經在閃爍（代表剛答對），就直接跳出，不重複計算
