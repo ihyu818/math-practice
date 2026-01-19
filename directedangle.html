@@ -171,7 +171,6 @@
 
     function handleInput(e) {
       if (state.mode !== 'play') return;
-
       // 1. 立即阻止瀏覽器原生滾動 (非常重要！)
       if (e.cancelable) e.preventDefault();
       
@@ -182,14 +181,15 @@
       // 計算座標並更新 state
       const newAngle = snapAngle(t.clientX - rect.left, t.clientY - rect.top);
       // 只有當角度真的改變時才觸發重繪，節省效能
-      //if (state.userAngle !== newAngle) {
-        //state.userAngle = newAngle;
+      if (state.userAngle !== newAngle) {
+        state.userAngle = newAngle;
 
       // 3. 更新狀態並立即重繪
-      state.userAngle = newAngle;
+      //state.userAngle = newAngle;
 
         // 使用 requestAnimationFrame 確保繪圖順暢
-        requestAnimationFrame(drawCircle);
+        drawCircle();
+        //requestAnimationFrame(drawCircle);
       }
     
     function checkAnswer() {
