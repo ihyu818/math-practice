@@ -194,13 +194,7 @@
       // 只有當角度真的改變時才觸發重繪，節省效能
       if (state.userAngle !== newAngle) {
         state.userAngle = newAngle;
-
-      // 3. 更新狀態並立即重繪
-      //state.userAngle = newAngle;
-
-        // 使用 requestAnimationFrame 確保繪圖順暢
         drawPointer();
-        //requestAnimationFrame(drawCircle);
       }
     }
     
