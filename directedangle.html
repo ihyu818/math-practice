@@ -94,9 +94,6 @@
       drawCircle();
     }
 
-
-
-    
     function drawCircle() {
       const canvas = document.getElementById('angleCanvas');
       if (!canvas) return;
@@ -156,13 +153,11 @@
       ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI * 2); ctx.fill();
   }
 
-
     function snapAngle(x, y) {
       const dx = x - 180;
       const dy = 180 - y;
       let deg = Math.atan2(dy, dx) * 180 / Math.PI;
       if (deg < 0) deg += 360;
-
       // 修正邏輯：考慮到 360 度與 0 度是重合的
       return specialAngles.reduce((prev, curr) => {
         // 計算當前角度與目標的最小夾角距離
@@ -170,7 +165,6 @@
           const d = Math.abs(a - b) % 360;
           return d > 180 ? 360 - d : d;
         };
-
         return getDist(curr, deg) < getDist(prev, deg) ? curr : prev;
       });
     }
