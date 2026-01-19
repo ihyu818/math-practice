@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>MATH LAB - HUB</title>
+  <!-- <link href="https://fonts.googleapis.com/css2?family=Lora:italic,wght@700&display=swap" rel="stylesheet"> -->
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@1,700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background-color: #ffffff; }
+    .math-font { 
+        font-family: 'Lora', serif; 
+        font-style: italic; 
+        /* 保留此行：確保數字輸入或顯示時不會造成排版抖動 */
+        font-variant-numeric: tabular-nums; 
+        /* 額外優化：確保在行動裝置上的字母渲染更精確 */
+        -webkit-font-smoothing: antialiased;
+    }
+    .icon-card {
+      aspect-ratio: 1 / 1;
+      width: 100%; /* 自動填滿網格格子 */
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 1.75rem; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+    .icon-card:active { transform: scale(0.92); }
+    .btn-addsub { background-color: #bfdbfe; color: #1e40af; box-shadow: 8px 12px 20px -5px rgba(30, 64, 175, 0.3); }
+    .btn-exponent { background-color: #fde68a; color: #92400e; box-shadow: 8px 12px 20px -5px rgba(146, 64, 14, 0.3); }
+    .btn-factor { background-color: #fecdd3; color: #9f1239; box-shadow: 8px 12px 20px -5px rgba(159, 18, 57, 0.3); }
+    .btn-angle { background-color: #bbf7d0; color: #166534; box-shadow: 8px 12px 20px -5px rgba(22, 101, 52, 0.3); } 
+    .btn-complete { background-color: #dbeafe; color: #1e40af; box-shadow: 8px 12px 20px -5px rgba(30, 64, 175, 0.3); }   
+    .btn-trig { background-color: #ddd6fe; color: #5b21b6; box-shadow: 8px 12px 20px -5px rgba(91, 33, 182, 0.3); }
+    .icon-symbol { font-size: clamp(3.5rem, 14vw, 5rem); line-height: 1; }
+    .icon-symbol-small { 
+      /* 稍微縮小一點點字級，因為加上 ±? 後字串變長了，確保不會擠到邊框 */
+      font-size: clamp(2rem, 9.5vw, 3.2rem); 
+      line-height: 1; 
+      letter-spacing: -0.05em; /* 讓字元之間稍微靠攏，看起來更像一個整體公式 */
+    }
+    /* 確保 inline-block 確實產生空間 */
+    .inline-block { display: inline-block; }
+    .exponent-base { position: relative; display: inline-block; }
+    .exponent-power { 
+      font-size: 0.55em; 
+      position: absolute; 
+      top: -0.15em; /* 稍微往上提一點 */
+      left: 0.8em;  /* 根據手機字體寬度微調 */
+    }
+
+    .grid-container {
+      display: grid;
+      /* 關鍵點：auto-fill 會自動填滿空間，且每個方塊最小 140px，最大平均分 */
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 1.5rem;
+      width: 100%;
+      /* 設定最大寬度為 500px 左右，這樣 5 個按鈕在桌機會自動變 3+2 (長方形) */
+      max-width: 520px;
+      justify-content: center;
+    }
+
+    @media (max-width: 400px) {
+      /* 手機太小時，確保還是維持兩欄，不要縮成一欄 */
+      .grid-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-6 text-slate-800">
+
+  <header class="text-center mb-10">
+    <h1 class="text-4xl font-black italic text-slate-900 tracking-tighter leading-none">
+      <span class="uppercase">Math Lab</span><br>
+      <span class="text-pink-600 text-2xl tracking-[0.2em] ml-1 uppercase">QUEST</span>
+    </h1>
+  </header>
+  
+  <div class="mb-10 w-full max-w-[320px]">
+    <input type="text" id="globalName" maxlength="16" 
+           class="w-full px-4 py-3 border-2 border-slate-200 rounded-2xl text-center font-bold text-lg outline-none focus:border-pink-500 transition-all shadow-sm" 
+           placeholder="輸入您的姓名">
+    <p id="errorMsg" class="text-red-500 text-xs mt-2 text-center font-bold hidden">使用者名稱不能超過 16 個字元</p>
+  </div>
+
+  <main class="grid-container">
+    <div onclick="goToGame('addsub.html')" class="icon-card btn-addsub">
+      <span class="icon-symbol font-black">±</span>
+    </div>
+    <div onclick="goToGame('directedangle.html')" class="icon-card btn-angle">
+        <svg width="70" height="70" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="6" />
+        <line x1="50" y1="50" x2="85" y2="15" stroke="currentColor" stroke-width="8" stroke-linecap="round" />
+        <circle cx="50" cy="50" r="4" fill="currentColor" />
+        </svg>
+    </div>
+    <div onclick="goToGame('exponent.html')" class="icon-card btn-exponent">
+      <span class="icon-symbol math-font exponent-base">a<span class="exponent-power">x</span></span>
+    </div>
+    <div onclick="goToGame('factorization.html')" class="icon-card btn-factor">
+      <span class="icon-symbol-small font-black tracking-tighter">( )( )</span>
+    </div>
+
+    <div onclick="goToGame('completingsquare.html')" class="icon-card btn-complete">
+      <span class="icon-symbol-small math-font">
+        (x±<span class="font-bold text-blue-600">?</span>)²
+      </span>
+    </div>
+
+    <div onclick="goToGame('TrigRatio.html')" class="icon-card btn-trig">
+      <span class="icon-symbol-small math-font">
+        <div class="flex flex-col items-center">
+          <span>y</span>
+          <div class="h-[3px] w-8 bg-current my-1"></div>
+          <span>r</span>
+        </div>
+      </span>
+    </div>
+  </main>
+
+    
+  
+  <script>
+    async function forceUpdateIfNeeded() {
+        try {
+            // 1. 抓取遠端的 config.json，後面的 t= 是為了確保抓到的是 GitHub 最新版
+            const response = await fetch(`config.json?t=${Date.now()}`);
+            const remote = await response.json();
+            
+            // 2. 讀取手機本地存的版本號
+            const localVersion = localStorage.getItem('math_lab_version');
+    
+            // 3. 如果本地沒版本號，或是版本號跟遠端對不起來
+            if (localVersion && localVersion !== remote.version) {
+                localStorage.setItem('math_lab_version', remote.version);
+                // 4. 強制刷新頁面，這會繞過所有快取，重新下載整個 index.html
+                console.log("發現新版本，強制更新中...");
+                window.location.reload(true);
+            } else {
+                // 第一次進入或版本一致，存入目前版本
+                localStorage.setItem('math_lab_version', remote.version);
+            }
+        } catch (e) {
+            console.error("版本檢查失敗，繼續執行舊版", e);
+        }
+    }
+    
+    // 立即執行檢查
+    forceUpdateIfNeeded();
+    
+    window.onload = () => {
+      const savedName = localStorage.getItem('math_lab_name');
+      if (savedName) document.getElementById('globalName').value = savedName;
+    };
+
+  function goToGame(url, c1, c2, btn) {
+      const nameInput = document.getElementById('globalName');
+      const errorMsg = document.getElementById('errorMsg');
+      const name = nameInput.value.trim();
+      
+      if (name !== "" && name.length <= 16) {
+        errorMsg.classList.add('hidden');
+        localStorage.setItem('math_lab_name', name); 
+
+        // --- 1. 定義當前點擊的按鈕 (解決 btn 未定義問題) ---
+        const btn = event.currentTarget;
+        
+        // --- 2. 抓取顏色 (解決 c1, c2 未定義問題) ---
+        const style = window.getComputedStyle(btn);
+        const rgbToHex = (rgb) => {
+          if (!rgb) return '#3b82f6';
+          const res = rgb.match(/\d+/g);
+          return res ? "#" + res.map(x => parseInt(x).toString(16).padStart(2, '0')).join('') : '#3b82f6';
+        };
+        const c1 = encodeURIComponent(rgbToHex(style.backgroundColor));
+        const c2 = encodeURIComponent(rgbToHex(style.color));
+
+        // --- 3. 抓取符號 (注意：如果按鈕裡是 SVG，innerText 會是空的) ---
+        // 這裡做個判斷，如果是空白就給一個預設符號，或者判斷是否有 SVG
+        //let symbolText = btn.innerText.trim();
+        //if (!symbolText && btn.querySelector('svg')) {
+        //  symbolText = "∠"; // 如果是角度關卡(SVG)，我們手動給它一個符號
+        //}
+        //const symbol = encodeURIComponent(symbolText || "MATH");
+
+        // --- 3. 抓取符號 (修正後的版本) ---
+        let symbol;
+        const svgElement = btn.querySelector('svg');
+
+        /*
+        if (svgElement) {
+          // 如果有 SVG，就抓取整個 SVG 的 HTML 字串
+          // 使用 btoa 轉成 Base64 可以避免 HTML 特殊符號 (如 < > #) 弄壞網址參數
+          symbol = btoa(svgElement.outerHTML); 
+        } else {
+          // 如果沒有 SVG，就抓取純文字 (如 ±, ( )( ))
+          const symbolText = btn.innerText.trim() || "MATH";
+          symbol = encodeURIComponent(symbolText);
+        }
+        */
+
+
+        // index.html 中的 goToGame 修正
+        if (svgElement) {
+            // 移除所有換行 (\n) 與標籤間的多餘空格
+            const minifiedSvg = svgElement.outerHTML.replace(/\n/g, '').replace(/>\s+</g, '><');
+            symbol = encodeURIComponent(btoa(minifiedSvg)); 
+        } else {
+          // 如果沒有 SVG，就抓取純文字 (如 ±, ( )( ))
+          const symbolText = btn.innerText.trim() || "MATH";
+          symbol = encodeURIComponent(symbolText);
+        }
+
+        // --- 4. 附加時間戳記並跳轉 ---
+        const version = new Date().getTime(); 
+        window.location.href = `${url}?v=${version}&c1=${c1}&c2=${c2}&s=${symbol}`;
+            
+      } else {
+        errorMsg.classList.remove('hidden');
+        nameInput.classList.add('border-red-500');
+        setTimeout(() => nameInput.classList.remove('border-red-500'), 2000);
+      }
+    }
+  </script>
+</body>
+</html>
