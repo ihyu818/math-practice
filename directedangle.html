@@ -214,8 +214,13 @@
         document.querySelector('.game-container').classList.add('correct-flash');
         
         state.isCorrectFlash = true;
-        //render();
- 
+        
+        setTimeout(() => {
+          document.querySelector('.game-container').classList.remove('correct-flash');
+          state.isCorrectFlash = false;
+          nextProblem();
+        }, 300);
+
         const p = {
           problem: state.targetAngle + "°",
           ans: state.targetAngle,
@@ -227,12 +232,7 @@
         };
         // 使用模組發送
         SyncProtocol.saveLog(SCRIPT_URL, state, p);
-
-        setTimeout(() => {
-          document.querySelector('.game-container').classList.remove('correct-flash');
-          state.isCorrectFlash = false;
-          nextProblem();
-        }, 300);
+        
       } else {
         state.attempts++; 
         state.combo = 0;
