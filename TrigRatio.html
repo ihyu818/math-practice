@@ -54,8 +54,11 @@
       const types = ['sin', 'cos', 'tan'];
       const type = types[Math.floor(Math.random() * types.length)];
 
-      state.problem = { x, y, r, type, target: type === 'sin' ? y/r : (type === 'cos' ? x/r : y/x) };
-      state.num = ""; state.den = ""; state.activeField = 'num';
+      // 徹底重置輸入區狀態
+      state.num = ""; 
+      state.den = ""; 
+      state.activeField = 'num'; 
+      state.isCorrectFlash = false;
       state.startTime = Date.now();
       render();
     }
@@ -154,30 +157,29 @@
       ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, py); ctx.stroke();
       ctx.fillStyle = '#15803d'; ctx.beginPath(); ctx.arc(px, py, 7, 0, Math.PI * 2); ctx.fill();
     }
+
     function handleKey(k) {
       if (k === 'DEL') {
-        if (state[state.activeField] === "" && state.activeField === 'den') {
-            state.activeField = 'num';
-        } else {
-            state[state.activeField] = state[state.activeField].slice(0, -1);
-        }
+        if (state[state.activeField] === "" && state.activeField === 'den') state.activeField = 'num';
+        else state[state.activeField] = state[state.activeField].slice(0, -1);
       } else if (k === '/' || k === '→') {
         state.activeField = 'den';
       } else if (k === '←') {
         state.activeField = 'num';
       } else if (k === '-') {
-        if (!state[state.activeField].includes('-')) {
-            state[state.activeField] = '-' + state[state.activeField];
-        } else {
-            state[state.activeField] = state[state.activeField].replace('-', '');
-        }
+        // 負號邏輯：切換正負
+        if (!state[state.activeField].includes('-')) state[state.activeField] = '-' + state[state.activeField];
+        else state[state.activeField] = state[state.activeField].replace('-', '');
       } else if (k === 'Enter') {
-        checkAnswer();
-        return; // 避免重複渲染
+        checkAnswer(true); // 手動檢查
+        return;
       } else if (!isNaN(k)) {
         state[state.activeField] += k;
       }
+      
       render();
+      // 關鍵：每次輸入後自動進行「非強制」檢查，答對就會直接跳題
+      checkAnswer(false); 
     }
 
     function checkAnswer(isManual = false) {
