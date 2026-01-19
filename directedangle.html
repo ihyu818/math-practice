@@ -82,31 +82,35 @@
       UIHeader.render('header-area', state);
       drawCircle();
     }
-
-
-
-
     
     function drawCircle() {
       const canvas = document.getElementById('angleCanvas');
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
-      const cx = 180, cy = 180, r = 175;
+      const cx = 180, cy = 180, r = 165; // 稍微調整半徑讓圓周更美觀
 
       ctx.clearRect(0, 0, 360, 360);
-      
-      // 繪製座標軸
+
+      // A. 繪製圓周 (新增)
       ctx.setLineDash([]);
-      ctx.strokeStyle = '#e2e8f0';
+      ctx.strokeStyle = '#86efac'; // 中綠色
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.stroke();
+      
+      // B. 繪製座標軸 (調淡顏色)
+      ctx.setLineDash([]);
+      ctx.strokeStyle = '#f1f5f9';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(cx, 0); ctx.lineTo(cx, 360);
       ctx.moveTo(0, cy); ctx.lineTo(360, cy);
       ctx.stroke();
 
-      // 繪製特殊角虛線 (磁吸點提示)
+      // C. 繪製特殊角虛線 (淺綠色)(磁吸點提示)
       ctx.setLineDash([4, 6]);
-      ctx.strokeStyle = '#cbd5e1';
+      ctx.strokeStyle = '#dcfce7'; 
       specialAngles.forEach(deg => {
         const rad = deg * Math.PI / 180;
         ctx.beginPath();
@@ -114,24 +118,26 @@
         ctx.lineTo(cx + r * Math.cos(rad), cy - r * Math.sin(rad));
         ctx.stroke();
       });
+      
+      // D. 繪製主指針 (深綠色)
+      if (state.userAngle !== null) { // 只有非空值才畫
+        const userRad = state.userAngle * Math.PI / 180;
+        ctx.setLineDash([]);
+        ctx.shadowBlur = 10;  // 原本為15
+        ctx.shadowColor = 'rgba(21, 128, 61, 0.2)';
+        ctx.strokeStyle = '#15803d'; // 深綠
+        ctx.lineWidth = 8;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + r * Math.cos(userRad), cy - r * Math.sin(userRad));
+        ctx.stroke();
+      }
 
-      // 繪製主指針
-    if (state.userAngle !== null) { // 只有非空值才畫
-      const userRad = state.userAngle * Math.PI / 180;
-      ctx.setLineDash([]);
-      ctx.shadowBlur = 15;
-      ctx.shadowColor = 'rgba(59, 130, 246, 0.4)';
-      ctx.strokeStyle = '#2563eb';
-      ctx.lineWidth = 8;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(cx + r * Math.cos(userRad), cy - r * Math.sin(userRad));
-      ctx.stroke();
-    }
-      //圓心永遠畫出來，代表原點
-      ctx.fillStyle = '#1e40af'; ctx.shadowBlur = 0;
-      ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fill();
+      // E. 繪製圓心 (深綠)(圓心永遠畫出來，代表原點)
+      ctx.fillStyle = '#166534'; 
+      ctx.shadowBlur = 0;
+      ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI * 2); ctx.fill();
   }
 
 
