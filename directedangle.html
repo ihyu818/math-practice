@@ -20,12 +20,13 @@
     .correct-flash { animation: flash 0.4s ease-out; }
     @keyframes flash { 0% { background-color: transparent; } 50% { background-color: #dbeafe; } 100% { background-color: transparent; } }
 
-    canvas { 
-      touch-action: none; 
-      user-select: none; 
-      -webkit-tap-highlight-color: transparent;
-      /* 新增：確保瀏覽器不把拖曳誤判為滑動翻頁 */
-      overscroll-behavior: contain; 
+    canvas {
+      touch-action: none; /* 阻斷所有手勢，包含長按選單、縮放、滾動 */
+      user-select: none; /* 禁止使用者選取畫布上的任何東西（這常是長按卡住的原因） */
+      -webkit-user-select: none;
+      -webkit-touch-callout: none; /* 禁止長按彈出選單（手機版 Chrome/Safari 常用） */
+      -webkit-tap-highlight-color: transparent; /* 去除點擊時的藍色高亮框 */
+      overscroll-behavior: contain; /* 新增：確保瀏覽器不把拖曳誤判為滑動翻頁 */
     }
   </style>
 </head>
