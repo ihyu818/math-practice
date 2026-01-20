@@ -293,8 +293,13 @@
     // 修改 onStart 來配合上面的邏輯
     const onStart = (e) => { 
       if(state.mode === 'play') { 
+        // 解決長按不放開的問題：先確保舊的狀態被清除
         state.isDown = true; 
-        state.isDraggingInSameTurn = false; // 剛開始拖曳
+
+        // 如果是 touch 事件，立即阻止瀏覽器預設行為 (如放大、彈選單)
+        if (e.cancelable) e.preventDefault();
+        
+        // 剛刪掉 // state.isDraggingInSameTurn = false; // 剛開始拖曳
         handleInput(e); 
       } 
     };
@@ -323,6 +328,8 @@
     window.addEventListener('touchmove', onMove, {passive: false});
     window.addEventListener('mouseup', onEnd);
     window.addEventListener('touchend', onEnd);
+    // 新增這行：當觸控被系統中斷時，也視為放開手，執行檢查
+    window.addEventListener('touchcancel', onEnd);
 
     // 移除 window.onload，回歸與 addsub 一致的「直接啟動」模式
     UIHeader.initTheme(); 
