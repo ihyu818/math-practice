@@ -28,6 +28,35 @@
   <script>
     const pythagoreanTriples = [[3, 4, 5], [5, 12, 13], [7, 24, 25], [8, 15, 17], [9, 40, 41]];
 
+    let triplesWithWeight = [
+      { data: [3, 4, 5],   weight: 3 }, // 想要出現 3 份
+      { data: [5, 12, 13], weight: 3 }, // 想要出現 3 份
+      { data: [7, 24, 25], weight: 3 }, // 想要出現 3 份
+      { data: [8, 15, 17], weight: 3 }, // 想要出現 3 份
+      { data: [9, 40, 41], weight: 1 }  // 想要出現 1 份
+    ];
+
+    // 這是用來存計算結果的快取陣列
+    let weightIntervals = [];
+    
+    function updateWeights() {
+      const totalWeight = triplesWithWeight.reduce((sum, item) => sum + item.weight, 0);
+      let currentLow = 0;
+    
+      weightIntervals = triplesWithWeight.map(item => {
+        // 算出這組數據佔 0~1 之間的比例長度
+        const probability = item.weight / totalWeight;
+        const interval = {
+          data: item.data,
+          min: currentLow,
+          max: currentLow + probability
+        };
+        // 更新下一個項目的起始點
+        currentLow += probability;
+        return interval;
+      });
+    }
+    
     function generateCoordinate() {
       const base = pythagoreanTriples[Math.floor(Math.random() * pythagoreanTriples.length)];
       let [x, y] = Math.random() > 0.5 ? [base[0], base[1]] : [base[1], base[0]];
