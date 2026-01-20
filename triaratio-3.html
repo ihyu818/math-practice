@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>座標生成測試 - 鍵盤支援</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 flex flex-col items-center justify-center min-h-screen font-sans">
+
+  <div class="bg-white p-8 rounded-2xl shadow-xl text-center max-w-sm w-full">
+    <h1 class="text-slate-400 font-bold tracking-widest uppercase text-sm mb-4">點點生成器 (支援實體鍵盤)</h1>
+    
+    <div id="coordinate-display" class="text-5xl font-black text-slate-800 italic mb-8">
+      ( ?, ? )
+    </div>
+
+    <button 
+      onclick="generateCoordinate()" 
+      class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl transition-all active:scale-95 shadow-lg"
+    >
+      按我或按 [Enter] 生成
+    </button>
+    
+    <p class="mt-4 text-slate-400 text-xs">按下實體鍵盤的 Enter 即可換題</p>
+  </div>
+
+  <script>
+    const pythagoreanTriples = [[3, 4, 5], [5, 12, 13], [7, 24, 25], [8, 15, 17], [9, 40, 41]];
+
+    function generateCoordinate() {
+      const base = pythagoreanTriples[Math.floor(Math.random() * pythagoreanTriples.length)];
+      let [x, y] = Math.random() > 0.5 ? [base[0], base[1]] : [base[1], base[0]];
+
+      if (Math.random() > 0.5) x *= -1;
+      if (Math.random() > 0.5) y *= -1;
+
+      document.getElementById('coordinate-display').innerText = `( ${x}, ${y} )`;
+    }
+
+    // --- 新增：實體鍵盤監聽 ---
+    window.addEventListener('keydown', function(e) {
+      // 判斷按下的鍵是否為 Enter
+      if (e.key === 'Enter') {
+        generateCoordinate();
+      }
+    });
+
+    // 初始化顯示一組
+    generateCoordinate();
+  </script>
+</body>
+</html>
