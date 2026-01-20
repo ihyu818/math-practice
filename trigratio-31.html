@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>權重比例測試實驗室</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .triple-input { width: 60px; text-align: center; border-bottom: 2px solid #cbd5e1; font-weight: bold; }
+    .triple-input:focus { outline: none; border-color: #16a34a; }
+  </style>
+</head>
+<body class="bg-slate-50 p-8 font-sans">
+
+  <div class="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-xl">
+    <h1 class="text-2xl font-black text-slate-800 mb-6 text-center">畢氏三元數權重測試器</h1>
+
+    <div class="flex flex-wrap justify-center gap-6 mb-8 p-4 bg-slate-50 rounded-xl">
+      <div class="flex flex-col items-center">
+        <span class="text-xs text-slate-500 mb-1">(3,4,5)</span>
+        <input type="number" id="w0" class="triple-input text-xl" value="2">
+      </div>
+      <div class="flex flex-col items-center">
+        <span class="text-xs text-slate-500 mb-1">(5,12,13)</span>
+        <input type="number" id="w1" class="triple-input text-xl" value="2">
+      </div>
+      <div class="flex flex-col items-center">
+        <span class="text-xs text-slate-500 mb-1">(7,24,25)</span>
+        <input type="number" id="w2" class="triple-input text-xl" value="2">
+      </div>
+      <div class="flex flex-col items-center">
+        <span class="text-xs text-slate-500 mb-1">(8,15,17)</span>
+        <input type="number" id="w3" class="triple-input text-xl" value="2">
+      </div>
+      <div class="flex flex-col items-center">
+        <span class="text-xs text-slate-500 mb-1">(9,40,41)</span>
+        <input type="number" id="w4" class="triple-input text-xl" value="1">
+      </div>
+    </div>
+
+    <div class="text-center text-sm text-slate-400 mb-4 font-bold">設定比例後按 [Enter] 鍵生成 100 組</div>
+
+    <div id="stats-display" class="grid grid-cols-5 gap-2 mb-8 text-center bg-green-50 p-4 rounded-lg hidden">
+      </div>
+
+    <div id="results-grid" class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-10 gap-2 text-[10px] font-mono">
+      </div>
+  </div>
+
+  <script>
+    const triplesData = [[3, 4, 5], [5, 12, 13], [7, 24, 25], [8, 15, 17], [9, 40, 41]];
+    let weightIntervals = [];
+
+    // 核心邏輯 1：預處理區間
+    function updateWeights() {
+      const weights = [
+        parseFloat(document.getElementById('w0').value) || 0,
+        parseFloat(document.getElementById('w1').value) || 0,
+        parseFloat(document.getElementById('w2').value) || 0,
+        parseFloat(document.getElementById('w3').value) || 0,
+        parseFloat(document.getElementById('w4').value) || 0
+      ];
+
+      const totalWeight = weights.reduce((a, b) => a + b, 0);
+      let currentLow = 0;
+
+      weightIntervals = triplesData.map((data, i) => {
+        const prob = weights[i] / totalWeight;
+        const interval = { data, min: currentLow, max: currentLow + prob, count: 0 };
+        currentLow += prob;
+        return interval;
+      });
+    }
+
+    // 核心邏輯 2：生成一組座標
+    function generateOne() {
+      const r = Math.random();
+      let selectedBase;
+      
+      for (const interval of weightIntervals) {
+        if (r >= interval.min && r < interval.max) {
+          selectedBase = interval.data;
+          interval.count++; // 記錄出現次數，用於統計
+          break;
+        }
+      }
+
+      let [x, y] = Math.random() > 0.5 ? [selectedBase[0], selectedBase[1]] : [selectedBase[1], selectedBase[0]];
+      if (Math.random() > 0.5) x *= -1;
+      if (Math.random() > 0.5) y *= -1;
+      return `(${x},${y})`;
+    }
+
+    // 批次執行 100 次並渲染
+    function runTest() {
+      updateWeights(); // 先更新權重快取
+      
+      const resultsGrid = document.getElementById('results-grid');
+      const statsDisplay = document.getElementById('stats-display');
+      resultsGrid.innerHTML = '';
+      
+      // 重設計數器
+      weightIntervals.forEach(inv => inv.count = 0);
+
+      // 生成 100 組
+      for (let i = 0; i < 100; i++) {
+        const coord = generateOne();
+        const div = document.createElement('div');
+        div.className = 'bg-slate-100 p-1 rounded text-center text-slate-600';
+        div.innerText = coord;
+        resultsGrid.appendChild(div);
+      }
+
+      // 顯示統計結果
+      statsDisplay.classList.remove('hidden');
+      statsDisplay.innerHTML = weightIntervals.map(inv => `
+        <div>
+          <div class="text-[10px] text-slate-400">(${inv.data[0]},${inv.data[1]})</div>
+          <div class="text-xl font-black text-green-700">${inv.count}%</div>
+        </div>
+      `).join('');
+    }
+
+    // 監聽 Enter 鍵
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        runTest();
+      }
+    });
+  </script>
+</body>
+</html>
