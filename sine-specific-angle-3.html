@@ -6,18 +6,40 @@
   <title>sin 特殊角練習 - 題目生成器</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* 移除特定字體引用，使用系統預設粗體 */
+    /* 題目字體設定 */
     .math-font { font-family: sans-serif; }
     .func-name { font-style: normal; font-weight: 700; } /* sin 用粗正體 */
     .angle-val { font-style: italic; font-weight: 700; } /* 角度用粗斜體 */
-/* 此段新增    
-    /* 答案輸入區的樣式：帶有底線的感覺 */
+/* 此段刪除    
+     答案輸入區的樣式：帶有底線的感覺 
     .answer-display { 
       min-width: 80px; 
       display: inline-block; 
       border-bottom: 4px solid #cbd5e1; 
       padding: 0 10px; }
-/* 此段新增 */      
+此段刪除 */      
+
+/* 分數排版樣式 */
+    .fraction-container {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      vertical-align: middle;
+      min-width: 60px;
+      margin-left: 8px;
+    }
+    .fraction-line {
+      width: 100%;
+      height: 3px;
+      background-color: #1e293b;
+      margin: 2px 0;
+    }
+    /* 被選中輸入框的發光效果 */
+    .active-input {
+      background-color: #f0fdf4;
+      border-radius: 4px;
+      box-shadow: 0 0 0 2px #16a34a;
+    }
   </style>
 
 </head>
@@ -31,18 +53,25 @@
         <span class="func-name">sin</span> 
         <span id="target-angle" class="angle-val text-blue-600">??°</span> 
         <span>=</span>
-        <span id="user-answer" class="answer-display text-green-600 font-bold ml-2"></span>
+
+        <div class="fraction-container">
+          <div id="num-display" class="px-2 min-h-[1.2em] transition-all" onclick="switchField('num')"></div>
+          <div class="fraction-line"></div>
+          <div id="den-display" class="px-2 min-h-[1.2em] transition-all" onclick="switchField('den')"></div>
+        </div>
       </div>
     </div>
     
     <button 
       onclick="nextQuestion()" 
-      class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition-all active:scale-95 shadow-lg text-xl"
-    >
+      class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition-all active:scale-95 shadow-lg text-xl">
       下一題 (Enter)
     </button>
     
-    <p class="mt-6 text-slate-400 text-sm">點擊按鈕或按下實體鍵盤 <b>Enter</b> 換題</p>
+    <div class="mt-6 text-slate-500 text-sm space-y-1">
+      <p>按 <b>r</b> 或 <b>*</b> 產生根號 <b>√</b></p>
+      <p>按 <b>/</b> 切換分子分母</p>
+    </div>
   </div>
 
   <script>
@@ -55,7 +84,10 @@
 /* 此段新增 */
     let state = {
       currentAngle: null,
-      userInput: "" // 儲存學生的輸入字串
+      userInput: "", // 儲存學生的輸入字串
+      num: "", // 分子內容
+      den: "", // 分母內容
+      activeField: "num" // 目前在哪個欄位: 'num' 或 'den'
     };
 /* 此段新增 */
 /* 此段刪除    
@@ -68,52 +100,78 @@
         newAngle = specialAngles[Math.floor(Math.random() * specialAngles.length)];
       } while (newAngle === state.currentAngle);
 
-      /* 此段刪除
-      currentAngle = newAngle;
-      // 3. 【修正】只更新角度顯示區，保留 sin 字樣與樣式
-      document.getElementById('target-angle').innerText = `${currentAngle}°`; */
-
       /* 此段修正新增 */
       state.currentAngle = newAngle;
       state.userInput = ""; // 換題時清空輸入
-      
+
+      state.num = "";
+      state.den = "";
+      state.activeField = "num"; // 預設先填分子
       updateUI();
       /* 此段修正新增 */
     }
 
 // 此段新增
-    // 專門負責更新畫面的函式
-    function updateUI() {
-      document.getElementById('target-angle').innerText = `${state.currentAngle}°`;
-      document.getElementById('user-answer').innerText = state.userInput;
-      
-      // 如果沒有輸入，顯示一點灰色底線暗示，有輸入則變色
-      const display = document.getElementById('user-answer');
-      display.style.borderColor = state.userInput === "" ? "#cbd5e1" : "#16a34a";
+    function switchField(field) {
+      state.activeField = field;
+      updateUI();
     }
 // 此段新增
     
-    // 4. 監聽實體鍵盤 Enter
+// 此段新增
+    // 專門負責更新畫面的函式
+    function updateUI() {
+      document.getElementById('target-angle').innerText = `${state.currentAngle}°`;
+      // document.getElementById('user-answer').innerText = state.userInput;
+      document.getElementById('num-display').innerText = state.num;
+      document.getElementById('den-display').innerText = state.den;
+      
+      // 如果沒有輸入，顯示一點灰色底線暗示，有輸入則變色
+      //const display = document.getElementById('user-answer');
+      //display.style.borderColor = state.userInput === "" ? "#cbd5e1" : "#16a34a";
+
+      // 視覺化提示目前在哪個欄位
+      document.getElementById('num-display').className = `px-2 min-h-[1.2em] ${state.activeField === 'num' ? 'active-input' : ''}`;
+      document.getElementById('den-display').className = `px-2 min-h-[1.2em] ${state.activeField === 'den' ? 'active-input' : ''}`;
+    }
+// 此段新增
+    
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
+      const key = e.key;
+
+      if (key === 'Enter') {
         nextQuestion();
-        return; 
+        return;
       }
-  // 此段新增
-      // 測試用：我們先隨便打字看看顯示效果
-      // 這裡暫時只接受數字，之後我們會做專門的按鈕面板
-      if (!isNaN(e.key) || e.key === "." || e.key === "/" || e.key === "-") {
-        state.userInput += e.key;
-        updateUI();
-      }
-      if (e.key === 'Backspace') {
-        state.userInput = state.userInput.slice(0, -1);
+
+      if (key === '/') {
+        state.activeField = (state.activeField === 'num' ? 'den' : 'num');
         updateUI();
         return;
       }
-  // 此段新增
-    });
 
+      if (key === 'Backspace') {
+        state[state.activeField] = state[state.activeField].slice(0, -1);
+        updateUI();
+        return;
+      }
+
+      // 處理根號：按 r 或 *
+      if (key.toLowerCase() === 'r' || key === '*') {
+        if (!state[state.activeField].includes('√')) { // 簡單限制：每個欄位一個根號
+            state[state.activeField] += '√';
+        }
+        updateUI();
+        return;
+      }
+
+      // 處理數字與負號
+      if (!isNaN(key) || key === "-") {
+        state[state.activeField] += key;
+        updateUI();
+      }
+    });
+    
     // 初始化第一題
     nextQuestion();
   </script>
