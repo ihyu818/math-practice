@@ -17,27 +17,6 @@
     .func-name { font-style: normal; font-weight: 700; } /* sin 用粗正體 */
     .angle-val { font-style: italic; font-weight: 700; } /* 角度用粗斜體 */
     .katex { font-size: 1.2em !important; } /* 讓數學符號大一點 */
-
-    /* 以下刪除
-    /* 真正的根號樣式
-    .radical {
-      display: inline-flex;
-      align-items: flex-start;
-      position: relative;
-      line-height: 1;
-      padding-top: 0.1em;
-    }
-    .radical-symbol {
-      font-style: normal;
-      transform: scaleY(1.3) translateY(0.05em);
-      margin-right: -0.05em;
-    }
-    .radical-content {
-      border-top: 3px solid #1e293b; /* 這就是會延長的橫槓
-      padding-left: 0.1em;
-      margin-top: 0.1em;
-    }
-    以上刪除 */
     
     /* 分數排版樣式 */ /* 分數容器：確保與 sin 等號對齊 */
     .fraction-container {
@@ -81,10 +60,13 @@
     }
     
     /* 被選中輸入框的發光效果 */
+    /* 修改後的選中樣式：移除粗綠框，改為柔和陰影 */
     .active-input {
       background-color: #f0fdf4;
-      border-radius: 12px;
-      box-shadow: 0 0 0 3px #16a34a;
+      border-radius: 8px;
+      /* 移除原本的 box-shadow，改為僅在上方有淡淡的綠色陰影 */
+      /* box-shadow: 0 0 0 3px #16a34a; */
+      box-shadow: inset 0 4px 6px -1px rgba(22, 163, 74, 0.1), 0 -2px 4px rgba(22, 163, 74, 0.05);
     }
   </style>
 </head>
@@ -204,16 +186,6 @@
     window.addEventListener('keydown', (e) => {
       const key = e.key;
       if (key === 'Enter') { nextQuestion(); return; }
-
-      /*
-      // 如果是整數模式，按 / 不切換分母
-      if (key === '/' && !state.isIntegerMode) { 
-        state.activeField = (state.activeField === 'num' ? 'den' : 'num'); 
-        updateUI(); 
-        return; 
-      }
-      if (key === '/') { state.activeField = (state.activeField === 'num' ? 'den' : 'num'); updateUI(); return; }
-      */
       
       // 修正：合併 / 鍵判斷邏輯，避免重複觸發
       if (key === '/') { 
@@ -225,22 +197,26 @@
       }
       
       if (key === 'Backspace') { state[state.activeField] = state[state.activeField].slice(0, -1); updateUI(); return; }
-      /* 本段修改
-      // 處理根號：按 r 或 *
-      if (key.toLowerCase() === 'r' || key === '*') {
-        if (!state[state.activeField].includes('√')) state[state.activeField] += '√'; // 簡單限制：每個欄位一個根號
-        updateUI(); return;
-      }
-      // 處理數字與負號
-      if (!isNaN(key) || key === "-") {
-        state[state.activeField] += key;
-      本段修改 */
 
       // 接受數字、負號以及 * (根號鍵)
       if (!isNaN(key) || key === "-" || key === "*") {
         // 限制每個欄位只有一個根號，避免 LaTeX 複雜化
         if (key === "*" && state[state.activeField].includes("*")) return;
-        
+
+        // --- 位數限制邏輯開始 ---
+        let currentStr = state[state.activeField];
+        if (!isNaN(key)) { // 只有輸入數字時才檢查位數
+          if (currentStr.includes("*")) {
+            // 已經有根號，檢查根號後的位數
+            let parts = currentStr.split("*");
+            if (parts[1].length >= 3) return; // 根號內最多 3 位
+          } else {
+            // 還沒有根號，檢查目前的數字位數
+            if (currentStr.replace("-", "").length >= 2) return; // 根號外最多 2 位
+          }
+        }
+        // --- 位數限制邏輯結束 ---
+
         state[state.activeField] += key;
         updateUI();
       }
