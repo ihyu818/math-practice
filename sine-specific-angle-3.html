@@ -10,38 +10,57 @@
     .math-font { font-family: sans-serif; }
     .func-name { font-style: normal; font-weight: 700; } /* sin 用粗正體 */
     .angle-val { font-style: italic; font-weight: 700; } /* 角度用粗斜體 */
-/* 此段刪除    
-     答案輸入區的樣式：帶有底線的感覺 
-    .answer-display { 
-      min-width: 80px; 
-      display: inline-block; 
-      border-bottom: 4px solid #cbd5e1; 
-      padding: 0 10px; }
-此段刪除 */      
 
-/* 分數排版樣式 */
+    /* 真正的根號樣式 */
+    .radical {
+      display: inline-flex;
+      align-items: flex-start;
+      position: relative;
+      line-height: 1;
+      padding-top: 0.1em;
+    }
+    .radical-symbol {
+      font-style: normal;
+      transform: scaleY(1.3) translateY(0.05em);
+      margin-right: -0.05em;
+    }
+    .radical-content {
+      border-top: 3px solid #1e293b; /* 這就是會延長的橫槓 */
+      padding-left: 0.1em;
+      margin-top: 0.1em;
+    }
+
+    /* 分數排版樣式 */
     .fraction-container {
       display: inline-flex;
       flex-direction: column;
       align-items: center;
       vertical-align: middle;
-      min-width: 60px;
-      margin-left: 8px;
+      min-width: 100px;
+      margin-left: 12px;
     }
     .fraction-line {
       width: 100%;
       height: 3px;
       background-color: #1e293b;
-      margin: 2px 0;
+      margin: 4px 0;
     }
     /* 被選中輸入框的發光效果 */
     .active-input {
       background-color: #f0fdf4;
-      border-radius: 4px;
-      box-shadow: 0 0 0 2px #16a34a;
+      border-radius: 8px;
+      box-shadow: 0 0 0 3px #16a34a;
     }
+    /* 本段新增 */
+    .input-box {
+      padding: 5px 15px;
+      min-height: 1.5em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* 本段新增 */
   </style>
-
 </head>
 <body class="bg-slate-50 flex flex-col items-center justify-center min-h-screen font-sans">
 
@@ -54,11 +73,20 @@
         <span id="target-angle" class="angle-val text-blue-600">??°</span> 
         <span>=</span>
 
+        <!--這段刪掉
         <div class="fraction-container">
           <div id="num-display" class="px-2 min-h-[1.2em] transition-all" onclick="switchField('num')"></div>
           <div class="fraction-line"></div>
           <div id="den-display" class="px-2 min-h-[1.2em] transition-all" onclick="switchField('den')"></div>
+        </div>-->
+        
+        <!-- 改成這一段 -->
+        <div class="fraction-container">
+          <div id="num-display" class="input-box" onclick="switchField('num')"></div>
+          <div class="fraction-line"></div>
+          <div id="den-display" class="input-box" onclick="switchField('den')"></div>
         </div>
+        <!-- 改成這一段 -->
       </div>
     </div>
     
@@ -67,11 +95,13 @@
       class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition-all active:scale-95 shadow-lg text-xl">
       下一題 (Enter)
     </button>
-    
+
+    <!-- 這段刪掉
     <div class="mt-6 text-slate-500 text-sm space-y-1">
       <p>按 <b>r</b> 或 <b>*</b> 產生根號 <b>√</b></p>
       <p>按 <b>/</b> 切換分子分母</p>
     </div>
+    -->
   </div>
 
   <script>
@@ -84,7 +114,7 @@
 /* 此段新增 */
     let state = {
       currentAngle: null,
-      userInput: "", // 儲存學生的輸入字串
+      // userInput: "", // 儲存學生的輸入字串
       num: "", // 分子內容
       den: "", // 分母內容
       activeField: "num" // 目前在哪個欄位: 'num' 或 'den'
@@ -102,7 +132,7 @@
 
       /* 此段修正新增 */
       state.currentAngle = newAngle;
-      state.userInput = ""; // 換題時清空輸入
+      // state.userInput = ""; // 換題時清空輸入
 
       state.num = "";
       state.den = "";
@@ -117,9 +147,20 @@
       updateUI();
     }
 // 此段新增
-    
+
 // 此段新增
+    // 格式化顯示：將字串轉化為帶有延長橫槓的 HTML
+    function formatMath(str) {
+      if (!str.includes('√')) return str;
+      let parts = str.split('√');
+      // 假設格式是 "√數字"
+      return `<span class="radical"><span class="radical-symbol">√</span><span class="radical-content">${parts[1] || ''}</span></span>`;
+    }
+// 此段新增
+    
+    // 此段大改
     // 專門負責更新畫面的函式
+    /*
     function updateUI() {
       document.getElementById('target-angle').innerText = `${state.currentAngle}°`;
       // document.getElementById('user-answer').innerText = state.userInput;
@@ -134,37 +175,29 @@
       document.getElementById('num-display').className = `px-2 min-h-[1.2em] ${state.activeField === 'num' ? 'active-input' : ''}`;
       document.getElementById('den-display').className = `px-2 min-h-[1.2em] ${state.activeField === 'den' ? 'active-input' : ''}`;
     }
-// 此段新增
-    
+    */
+    // 此段大改
+
+    function updateUI() {
+      document.getElementById('target-angle').innerText = `${state.currentAngle}°`;
+      document.getElementById('num-display').innerHTML = formatMath(state.num);
+      document.getElementById('den-display').innerHTML = formatMath(state.den);
+
+      document.getElementById('num-display').className = `input-box ${state.activeField === 'num' ? 'active-input' : ''}`;
+      document.getElementById('den-display').className = `input-box ${state.activeField === 'den' ? 'active-input' : ''}`;
+    }
+
+
     window.addEventListener('keydown', (e) => {
       const key = e.key;
-
-      if (key === 'Enter') {
-        nextQuestion();
-        return;
-      }
-
-      if (key === '/') {
-        state.activeField = (state.activeField === 'num' ? 'den' : 'num');
-        updateUI();
-        return;
-      }
-
-      if (key === 'Backspace') {
-        state[state.activeField] = state[state.activeField].slice(0, -1);
-        updateUI();
-        return;
-      }
-
+      if (key === 'Enter') { nextQuestion(); return; }
+      if (key === '/') { state.activeField = (state.activeField === 'num' ? 'den' : 'num'); updateUI(); return; }
+      if (key === 'Backspace') { state[state.activeField] = state[state.activeField].slice(0, -1); updateUI(); return; }
       // 處理根號：按 r 或 *
       if (key.toLowerCase() === 'r' || key === '*') {
-        if (!state[state.activeField].includes('√')) { // 簡單限制：每個欄位一個根號
-            state[state.activeField] += '√';
-        }
-        updateUI();
-        return;
+        if (!state[state.activeField].includes('√')) state[state.activeField] += '√'; // 簡單限制：每個欄位一個根號
+        updateUI(); return;
       }
-
       // 處理數字與負號
       if (!isNaN(key) || key === "-") {
         state[state.activeField] += key;
