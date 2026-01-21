@@ -123,9 +123,76 @@
     </div> -->
   </main>
 
-    
-  
   <script>
+    // 版本檢查與更新邏輯保持不變
+    async function forceUpdateIfNeeded() {
+        try {
+            const response = await fetch(`config.json?t=${Date.now()}`);
+            const remote = await response.json();
+            const localVersion = localStorage.getItem('math_lab_version');
+            if (localVersion && localVersion !== remote.version) {
+                localStorage.setItem('math_lab_version', remote.version);
+                window.location.reload(true);
+            } else {
+                localStorage.setItem('math_lab_version', remote.version);
+            }
+        } catch (e) {
+            console.error("版本檢查失敗", e);
+        }
+    }
+    
+    forceUpdateIfNeeded();
+    
+    // 網頁載入後的初始化
+    window.onload = () => {
+      const savedName = localStorage.getItem('math_lab_name');
+      if (savedName) document.getElementById('globalName').value = savedName;
+
+      // 初始化按鈕網格
+      renderMenu();
+    };
+
+    function renderMenu() {
+      const container = document.getElementById('gameGrid');
+      if (!container) return; // 安全檢查
+      container.innerHTML = ''; 
+    
+      // 從 game-config.js 讀取設定並生成按鈕
+      Object.values(GAME_CONFIG).forEach(game => {
+        const card = document.createElement('div');
+        card.className = 'icon-card'; 
+        card.style.backgroundColor = game.bgColor;
+        card.style.color = game.textColor;
+        card.style.boxShadow = `8px 12px 20px -5px ${game.shadow}`;
+        
+        // 注入符號，這會讓所有頁面的圖示同步
+        card.innerHTML = `<span style="font-size: ${game.fontSize}">${game.symbol}</span>`;
+        
+        card.onclick = () => {
+          const nameInput = document.getElementById('globalName');
+          const errorMsg = document.getElementById('errorMsg');
+          const name = nameInput.value.trim();
+          
+          if (name !== "" && name.length <= 16) {
+            errorMsg.classList.add('hidden');
+            nameInput.classList.remove('border-red-500');
+            localStorage.setItem('math_lab_name', name);
+            // 跳轉時只帶入 gameId 參數，達成「單一事實來源」
+            window.location.href = `${game.url}?gameId=${game.id}`;
+          } else {
+            errorMsg.classList.remove('hidden');
+            nameInput.classList.add('border-red-500');
+            setTimeout(() => nameInput.classList.remove('border-red-500'), 2000);
+          }
+        };
+        container.appendChild(card);
+      });
+    }   
+  </script>
+
+  
+  
+  <!-- <script>
     async function forceUpdateIfNeeded() {
         try {
             // 1. 抓取遠端的 config.json，後面的 t= 是為了確保抓到的是 GitHub 最新版
@@ -264,6 +331,6 @@
         container.appendChild(card);
       });
     }    
-  </script>
+  </script> -->
 </body>
 </html>
