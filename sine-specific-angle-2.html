@@ -97,6 +97,7 @@
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         nextQuestion();
+        return; 
       }
   // 此段新增
       // 測試用：我們先隨便打字看看顯示效果
@@ -108,10 +109,11 @@
       if (e.key === 'Backspace') {
         state.userInput = state.userInput.slice(0, -1);
         updateUI();
+        return;
       }
   // 此段新增
     });
-    
+
     // 初始化第一題
     nextQuestion();
   </script>
