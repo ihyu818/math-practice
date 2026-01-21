@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>sin 特殊角練習 - 題目生成器</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* 移除特定字體引用，使用系統預設粗體 */
+    .math-font { font-family: sans-serif; }
+    .func-name { font-style: normal; font-weight: 700; } /* sin 用粗正體 */
+    .angle-val { font-style: italic; font-weight: 700; } /* 角度用粗斜體 */
+/* 此段新增    
+    /* 答案輸入區的樣式：帶有底線的感覺 */
+    .answer-display { 
+      min-width: 80px; 
+      display: inline-block; 
+      border-bottom: 4px solid #cbd5e1; 
+      padding: 0 10px; }
+/* 此段新增 */      
+  </style>
+
+</head>
+<body class="bg-slate-50 flex flex-col items-center justify-center min-h-screen font-sans">
+
+  <div class="bg-white p-10 rounded-3xl shadow-2xl text-center max-w-md w-full border-4 border-blue-100">
+    <h1 class="text-slate-400 font-bold tracking-widest uppercase text-sm mb-6">Trigonometry Lab</h1>
+
+    <div class="mb-10">
+      <div id="question-text" class="text-6xl text-slate-800 math-font">
+        <span class="func-name">sin</span> 
+        <span id="target-angle" class="angle-val text-blue-600">??°</span> 
+        <span>=</span>
+        <span id="user-answer" class="answer-display text-green-600 font-bold ml-2"></span>
+      </div>
+    </div>
+    
+    <button 
+      onclick="nextQuestion()" 
+      class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition-all active:scale-95 shadow-lg text-xl"
+    >
+      下一題 (Enter)
+    </button>
+    
+    <p class="mt-6 text-slate-400 text-sm">點擊按鈕或按下實體鍵盤 <b>Enter</b> 換題</p>
+  </div>
+
+  <script>
+    // 1. 定義 0-360 度的特殊角
+    const specialAngles = [
+      0, 30, 45, 60, 90, 120, 135, 150, 180, 
+      210, 225, 240, 270, 300, 315, 330, 360
+    ];
+
+/* 此段新增 */
+    let state = {
+      currentAngle: null,
+      userInput: "" // 儲存學生的輸入字串
+    };
+/* 此段新增 */
+/* 此段刪除    
+    let currentAngle = null; */
+
+    function nextQuestion() {
+      let newAngle;
+      // 2. 不重複機制
+      do {
+        newAngle = specialAngles[Math.floor(Math.random() * specialAngles.length)];
+      } while (newAngle === state.currentAngle);
+
+      /* 此段刪除
+      currentAngle = newAngle;
+      // 3. 【修正】只更新角度顯示區，保留 sin 字樣與樣式
+      document.getElementById('target-angle').innerText = `${currentAngle}°`; */
+
+      /* 此段修正新增 */
+      state.currentAngle = newAngle;
+      state.userInput = ""; // 換題時清空輸入
+      
+      updateUI();
+      /* 此段修正新增 */
+    }
+
+// 此段新增
+    // 專門負責更新畫面的函式
+    function updateUI() {
+      document.getElementById('target-angle').innerText = `${state.currentAngle}°`;
+      document.getElementById('user-answer').innerText = state.userInput;
+      
+      // 如果沒有輸入，顯示一點灰色底線暗示，有輸入則變色
+      const display = document.getElementById('user-answer');
+      display.style.borderColor = state.userInput === "" ? "#cbd5e1" : "#16a34a";
+    }
+// 此段新增
+    
+    // 4. 監聽實體鍵盤 Enter
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        nextQuestion();
+        return; 
+      }
+  // 此段新增
+      // 測試用：我們先隨便打字看看顯示效果
+      // 這裡暫時只接受數字，之後我們會做專門的按鈕面板
+      if (!isNaN(e.key) || e.key === "." || e.key === "/" || e.key === "-") {
+        state.userInput += e.key;
+        updateUI();
+      }
+      if (e.key === 'Backspace') {
+        state.userInput = state.userInput.slice(0, -1);
+        updateUI();
+        return;
+      }
+  // 此段新增
+    });
+
+    // 初始化第一題
+    nextQuestion();
+  </script>
+</body>
+</html>
