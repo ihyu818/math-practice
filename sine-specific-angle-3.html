@@ -147,17 +147,14 @@
       updateUI();
     }
 // 此段新增
-
-// 此段新增
-    // 格式化顯示：將字串轉化為帶有延長橫槓的 HTML
+    
     function formatMath(str) {
       if (!str.includes('√')) return str;
-      let parts = str.split('√');
-      // 假設格式是 "√數字"
-      return `<span class="radical"><span class="radical-symbol">√</span><span class="radical-content">${parts[1] || ''}</span></span>`;
+      let [before, after] = str.split('√');
+      // 保留根號前的文字（如負號或係數），根號內的文字則放在帶有 border-top 的容器中
+      return `${before}<span class="radical"><span class="radical-symbol">√</span><span class="radical-content">${after || ''}</span></span>`;
     }
-// 此段新增
-    
+        
     // 此段大改
     // 專門負責更新畫面的函式
     /*
