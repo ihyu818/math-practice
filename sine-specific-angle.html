@@ -48,18 +48,15 @@
 
     function nextQuestion() {
       let newAngle;
-
-      // 2. 不重複機制：如果抽到跟上次一樣的角度，就重抽
+      // 2. 不重複機制
       do {
         newAngle = specialAngles[Math.floor(Math.random() * specialAngles.length)];
       } while (newAngle === currentAngle);
-
       currentAngle = newAngle;
-
-      // 3. 顯示題目
-      document.getElementById('question-text').innerHTML = `sin <span class="text-slate-800">${currentAngle}°</span> = ?`;
+      // 3. 【修正】只更新角度顯示區，保留 sin 字樣與樣式
+      document.getElementById('target-angle').innerText = `${currentAngle}°`;
     }
-
+    
     // 4. 監聽實體鍵盤 Enter
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
