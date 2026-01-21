@@ -87,7 +87,8 @@
     <p id="errorMsg" class="text-red-500 text-xs mt-2 text-center font-bold hidden">使用者名稱不能超過 16 個字元</p>
   </div>
 
-  <main class="grid-container">
+  <!-- <main class="grid-container"> -->
+  <main id="gameGrid" class="grid-container">
     <!-- <div onclick="goToGame('addsub.html')" class="icon-card btn-addsub">
       <span class="icon-symbol font-black">±</span>
     </div>
@@ -160,6 +161,7 @@
       renderMenu();
     };
 
+  /*
   function goToGame(url, c1, c2, btn) {
       const nameInput = document.getElementById('globalName');
       const errorMsg = document.getElementById('errorMsg');
@@ -208,7 +210,7 @@
 
 
         // index.html 中的 goToGame 修正
-        if (svgElement) {
+        /*if (svgElement) {
             // 移除所有換行 (\n) 與標籤間的多餘空格
             const minifiedSvg = svgElement.outerHTML.replace(/\n/g, '').replace(/>\s+</g, '><');
             symbol = encodeURIComponent(btoa(minifiedSvg)); 
@@ -228,7 +230,8 @@
         setTimeout(() => nameInput.classList.remove('border-red-500'), 2000);
       }
     }
-
+    */
+      
     function renderMenu() {
       const container = document.getElementById('gameGrid');
       container.innerHTML = ''; // 確保清空
