@@ -81,6 +81,17 @@
       /* 此段修正新增 */
     }
 
+// 此段新增
+    // 專門負責更新畫面的函式
+    function updateUI() {
+      document.getElementById('target-angle').innerText = `${state.currentAngle}°`;
+      document.getElementById('user-answer').innerText = state.userInput;
+      
+      // 如果沒有輸入，顯示一點灰色底線暗示，有輸入則變色
+      const display = document.getElementById('user-answer');
+      display.style.borderColor = state.userInput === "" ? "#cbd5e1" : "#16a34a";
+    }
+// 此段新增
     
     // 4. 監聽實體鍵盤 Enter
     window.addEventListener('keydown', (e) => {
@@ -89,6 +100,24 @@
       }
     });
 
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        nextQuestion();
+      }
+  // 此段新增
+      // 測試用：我們先隨便打字看看顯示效果
+      // 這裡暫時只接受數字，之後我們會做專門的按鈕面板
+      if (!isNaN(e.key) || e.key === "." || e.key === "/" || e.key === "-") {
+        state.userInput += e.key;
+        updateUI();
+      }
+      if (e.key === 'Backspace') {
+        state.userInput = state.userInput.slice(0, -1);
+        updateUI();
+      }
+  // 此段新增
+    });
+    
     // 初始化第一題
     nextQuestion();
   </script>
