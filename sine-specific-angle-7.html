@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>sin 特殊角練習 - 題目生成器</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Katex -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <!-- Katex -->
+  <style>
+    /* 題目字體設定 */
+    .math-font { font-family: sans-serif; }
+    .func-name { font-style: normal; font-weight: 700; } /* sin 用粗正體 */
+    .angle-val { font-style: italic; font-weight: 700; } /* 角度用粗斜體 */
+    .katex { font-size: 1.2em !important; } /* 讓數學符號大一點 */
+    
+    /* 分數排版樣式 */ /* 分數容器：確保與 sin 等號對齊 */
+    .fraction-container {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      vertical-align: middle;
+      min-width: 120px;
+      margin-left: 15px;
+    }
+
+    /* 修正：補上整數模式的 CSS */
+    .no-frac .fraction-line, .no-frac #den-display { display: none; }
+    .no-frac #num-display { border-bottom: 3px solid #cbd5e1; min-width: 80px; }
+    .fraction-line {
+      width: 100%;
+      height: 3px;
+      background-color: #1e293b;
+      margin: 5px 0;
+    }
+    /* 本段修改
+    .input-box {
+      padding: 5px 15px;
+      min-height: 1.5em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    本段修改 */
+    /* 點擊區域樣式 */
+    .input-box {
+      padding: 10px 20px;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6em; /* KaTeX 渲染後會很大，稍微縮小 */
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    /* 被選中輸入框的發光效果 */
+    /* 修改後的選中樣式：移除粗綠框，改為柔和陰影 */
+    .active-input {
+      background-color: #f0fdf4;
+      border-radius: 8px;
+      /* 移除原本的 box-shadow，改為僅在上方有淡淡的綠色陰影 */
+      /* box-shadow: 0 0 0 3px #16a34a; */
+      /* 柔和的上方陰影 */
+      box-shadow: inset 0 4px 6px -1px rgba(22, 163, 74, 0.1), 0 -2px 4px rgba(22, 163, 74, 0.05);  
+    }
+    /* 特別優化：整數模式下的選中陰影，讓它集中在底線附近 */
+    .no-frac .active-input {
+      border-bottom: 3px solid #16a34a; /* 選中時底線變綠 */
+      box-shadow: 0 4px 6px -2px rgba(22, 163, 74, 0.2);
+    }
+  </style>
+</head>
+  
+<body class="bg-slate-50 flex flex-col items-center justify-center min-h-screen font-sans">
+
+  <div class="bg-white p-10 rounded-3xl shadow-2xl text-center max-w-md w-full border-4 border-blue-100">
+    <h1 class="text-slate-400 font-bold tracking-widest uppercase text-sm mb-6">Trigonometry Lab</h1>
+
+    <!-- <div class="mb-10"> -->
+    <div class="mb-12">
+      <!-- <div id="question-text" class="text-6xl text-slate-800 math-font"> -->
+      <div class="text-6xl text-slate-800 math-font flex items-center justify-center">
+        <span class="func-name">sin</span> 
+        <!-- <span id="target-angle" class="angle-val text-blue-600">??°</span>  -->
+        <span id="target-angle" class="angle-val text-blue-600 ml-2">??°</span> 
+        <!-- <span>=</span> -->
+        <span class="mx-4">=</span>
+
+        <!-- <div class="fraction-container"> -->
+        <div id="main-container" class="fraction-container">
+          <div id="num-display" class="input-box" onclick="switchField('num')"></div>
+          <div class="fraction-line"></div>
+          <div id="den-display" class="input-box" onclick="switchField('den')"></div>
+        </div>
+      </div>
+    </div>
+    
+    <button 
+      onclick="nextQuestion()" 
+      class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition-all active:scale-95 shadow-lg text-xl">
+      下一題 (Enter)
+    </button>
+  </div>
+
+  <script>
+    // 1. 定義 0-360 度的特殊角
+    const specialAngles = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330, 360];
+    const integerAngles = [0, 90, 180, 270, 360]; // 這是您的整數集合
+    
+    let state = {
+      currentAngle: null,
+      isIntegerMode: false, // 紀錄當前題目是否為整數格式
+      num: "", // 分子內容
+      den: "", // 分母內容
+      activeField: "num" // 目前在哪個欄位: 'num' 或 'den'
+    };
+    
+    function nextQuestion() {
+      let newAngle;
+      // 不重複機制
+      do {
+        newAngle = specialAngles[Math.floor(Math.random() * specialAngles.length)];
+      } while (newAngle === state.currentAngle);
+
+      state.currentAngle = newAngle;
+
+      // 核心邏輯：判定是否在整數集合內
+      state.isIntegerMode = integerAngles.includes(newAngle);
+      state.num = "";
+      state.den = "";
+      state.activeField = "num"; // 預設先填分子
+      updateUI();
+    }
+
+    function switchField(field) {
+      state.activeField = field;
+      updateUI();
+    }
+
+    // 【核心】將輸入字串轉為 LaTeX 格式
+    function convertToLatex(str) {
+      if (str === "") return "";
+      if (str === "-") return "-";
+      
+      // 將 * 號後的數字包裹進 \sqrt{}
+      // 支援多種情況： "2*3" -> "2\sqrt{3}", "*2" -> "\sqrt{2}"
+      let latex = str.replace(/\*(\d+)/g, '\\sqrt{$1}');
+      
+      // 處理只有 * 沒有數字的情況 (學生剛按鍵時)
+      latex = latex.replace(/\*$/, '\\sqrt{\\phantom{x}}');
+      
+      return latex;
+    }
+    
+    function updateUI() {
+      document.getElementById('target-angle').innerText = `${state.currentAngle}°`;
+
+      const container = document.getElementById('main-container');
+      // 根據 state 的布林值切換 CSS 類別
+      if (state.isIntegerMode) {
+        container.classList.add('no-frac');
+      } else {
+        container.classList.remove('no-frac');
+      }
+
+      // KaTeX 渲染邏輯保持不變
+      katex.render(convertToLatex(state.num), document.getElementById('num-display'));
+      katex.render(convertToLatex(state.den), document.getElementById('den-display'));
+    
+      document.getElementById('num-display').classList.toggle('active-input', state.activeField === 'num');
+      document.getElementById('den-display').classList.toggle('active-input', state.activeField === 'den');
+
+      // 新增：每次更新完畫面就檢查一次答案
+      checkAnswer();
+    }
+
+    function checkAnswer() {
+        
+
+    
+
+    }
+    
+    function checkAnswer() {
+        // 如果分子是空的，或者分數模式下分母是空的，就先不判定
+        if (state.num === "") return;
+        if (!state.isIntegerMode && state.den === "") return;
+
+        // 2. 避免在換題的綠光閃爍期間重複判定
+        if (document.body.style.backgroundColor === "rgb(220, 252, 231)") return;
+      
+        // 1. 計算學生目前的輸入值
+        const userNum = parseValue(state.num);
+        const userDen = state.isIntegerMode ? 1 : parseValue(state.den);
+
+        if (userDen === 0) return; // 避免分母為 0 的計算錯誤
+        const userResult = userNum / userDen;
+    
+        // 2. 計算標準正解
+        const correctResult = Math.sin(state.currentAngle * Math.PI / 180);
+      
+        // 3. 判定 (容許極微小誤差)
+        if (Math.abs(userResult - correctResult) < 0.001) {
+            // 答對了！
+            document.body.style.backgroundColor = "#dcfce7"; // 閃爍綠光
+            
+            // 鎖定輸入，避免在跳題過程中重複觸發
+            const tempAngle = state.currentAngle;
+            
+            setTimeout(() => {
+                document.body.style.backgroundColor = "#f8fafc";
+                // 只有當題目還沒換過時才換題
+                if (state.currentAngle === tempAngle) {
+                    nextQuestion();
+                }
+            }, 400); // 給學生 0.4 秒的時間看清楚自己填對的樣子
+        }
+    }
+
+    // 別忘了也要把 parseValue 函式放進 script 裡
+    function parseValue(str) {
+        if (str === "" || str === "-") return 0;
+        let isNeg = str.startsWith("-");
+        let s = isNeg ? str.slice(1) : str;
+        let val;
+        if (s.includes("*")) {
+            let parts = s.split("*");
+            let coefficient = parts[0] === "" ? 1 : parseFloat(parts[0]);
+            let inside = parts[1] === "" ? 1 : parseFloat(parts[1]);
+            val = coefficient * Math.sqrt(inside);
+        } else {
+            val = parseFloat(s);
+        }
+        return isNeg ? -val : val;
+    }
+    
+    window.addEventListener('keydown', (e) => {
+      const key = e.key;
+      if (key === 'Enter') { nextQuestion(); return; }
+      
+      // 修正：合併 / 鍵判斷邏輯，避免重複觸發
+      if (key === '/') { 
+        if (!state.isIntegerMode) {
+          state.activeField = (state.activeField === 'num' ? 'den' : 'num'); 
+          updateUI(); 
+        }
+        return; 
+      }
+      
+      if (key === 'Backspace') { state[state.activeField] = state[state.activeField].slice(0, -1); updateUI(); return; }
+
+      // 接受數字、負號以及 * (根號鍵)
+      if (!isNaN(key) || key === "-" || key === "*") {
+        // 限制每個欄位只有一個根號，避免 LaTeX 複雜化
+        if (key === "*" && state[state.activeField].includes("*")) return;
+
+        // --- 位數限制邏輯開始 ---
+        let currentStr = state[state.activeField];
+        if (!isNaN(key)) { // 只有輸入數字時才檢查位數
+          if (currentStr.includes("*")) {
+            // 已經有根號，檢查根號後的位數
+            let parts = currentStr.split("*");
+            if (parts[1].length >= 3) return; // 根號內最多 3 位
+          } else {
+            // 還沒有根號，檢查目前的數字位數
+            if (currentStr.replace("-", "").length >= 2) return; // 根號外最多 2 位
+          }
+        }
+        // --- 位數限制邏輯結束 ---
+
+        state[state.activeField] += key;
+        updateUI();
+      }
+    });
+    
+    // 初始化第一題
+    nextQuestion();
+  </script>
+</body>
+</html>
