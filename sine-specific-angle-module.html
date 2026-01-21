@@ -165,6 +165,45 @@
     }
 
     UIHeader.initTheme(); nextProblem(); startTimer(); render();
+
+  window.addEventListener('keydown', (e) => {
+    // 如果目前不是在遊戲模式，則不反應
+    if (state.mode !== 'play') return;
+  
+    const key = e.key;
+  
+    // 1. 處理數字 0-9
+    if (key >= '0' && key <= '9') {
+      pressKey(key);
+    } 
+    // 2. 處理負號
+    else if (key === '-') {
+      pressKey('-');
+    } 
+    // 3. 處理根號 (對應鍵盤上的星號 *)
+    else if (key === '*') {
+      pressKey('*');
+    } 
+    // 4. 處理分母切換 (對應鍵盤上的斜線 /)
+    else if (key === '/') {
+      // 阻止瀏覽器預設的搜尋功能 (部分瀏覽器按 / 會跳出搜尋)
+      e.preventDefault(); 
+      pressKey('/');
+    } 
+    // 5. 處理刪除
+    else if (key === 'Backspace') {
+      pressKey('back');
+    }
+    // 6. 處理 Enter (手動換題，或在某些情況下作為確認)
+    else if (key === 'Enter') {
+      // 如果想要 Enter 也能判定，可以呼叫 checkAnswer()，或維持 nextProblem()
+      if (state.isAnswerCorrect) {
+        nextProblem();
+      }
+    }
+  });
   </script>
 </body>
 </html>
+
+
