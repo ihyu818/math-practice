@@ -10,9 +10,16 @@
     .math-font { font-family: sans-serif; }
     .func-name { font-style: normal; font-weight: 700; } /* sin 用粗正體 */
     .angle-val { font-style: italic; font-weight: 700; } /* 角度用粗斜體 */
+/* 此段新增    
+    /* 答案輸入區的樣式：帶有底線的感覺 */
+    .answer-display { 
+      min-width: 80px; 
+      display: inline-block; 
+      border-bottom: 4px solid #cbd5e1; 
+      padding: 0 10px;
+/* 此段新增 */      
   </style>
 
-  
 </head>
 <body class="bg-slate-50 flex flex-col items-center justify-center min-h-screen font-sans">
 
@@ -23,7 +30,8 @@
       <div id="question-text" class="text-6xl text-slate-800 math-font">
         <span class="func-name">sin</span> 
         <span id="target-angle" class="angle-val text-blue-600">??°</span> 
-        = ?
+        <span>=</span>
+        <span id="user-answer" class="answer-display text-green-600 font-bold ml-2"></span>
       </div>
     </div>
     
@@ -44,7 +52,14 @@
       210, 225, 240, 270, 300, 315, 330, 360
     ];
 
-    let currentAngle = null;
+/* 此段新增 */
+    let state = {
+      currentAngle: null,
+      userInput: "" // 儲存學生的輸入字串
+    };
+/* 此段新增 */
+/* 此段刪除    
+    let currentAngle = null; */
 
     function nextQuestion() {
       let newAngle;
@@ -52,9 +67,18 @@
       do {
         newAngle = specialAngles[Math.floor(Math.random() * specialAngles.length)];
       } while (newAngle === currentAngle);
+
+      /* 此段刪除
       currentAngle = newAngle;
       // 3. 【修正】只更新角度顯示區，保留 sin 字樣與樣式
-      document.getElementById('target-angle').innerText = `${currentAngle}°`;
+      document.getElementById('target-angle').innerText = `${currentAngle}°`; */
+
+      /* 此段修正新增 */
+      state.currentAngle = newAngle;
+      state.userInput = ""; // 換題時清空輸入
+      
+      updateUI();
+      /* 此段修正新增 */
     }
     
     // 4. 監聽實體鍵盤 Enter
