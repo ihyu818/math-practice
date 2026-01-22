@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Trigonometry Lab - Math Lab</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/session-manager.js?v=20260114"></script>
+  <script src="js/ui-header.js?v=20260119"></script>
+  <script src="js/ui-keyboard-root.js?v=20260114"></script>
+  <script src="js/scoring-engine.js?v=20260114"></script>
+  <script src="js/ui-summary.js?v=20260114"></script>
+  <script src="js/sync-protocol.js?v=20260114"></script>
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+
+  <style>
+    :root { 
+        --fluid-text: clamp(1.8rem, 8vw, 3.8rem); 
+        --theme-color: #2563eb; 
+    }
+
+    body { background-color: #f8fafc; overflow-x: hidden; touch-action: manipulation; }
+    
+    .fraction-container {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        vertical-align: middle;
+        min-width: 90px; 
+        margin-left: 8px;
+    }
+    .fraction-line { width: 100%; height: 3px; background-color: #1e293b; margin: 3px 0; }
+    .no-frac .num-slot { border-bottom: 5px solid #cbd5e1; min-width: 60px; }
+    .no-frac .fraction-line, .no-frac .den-slot { display: none; }
+
+    .slot { 
+        min-height: 55px;  
+        min-width: 70px;   
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        font-weight: 800; 
+        font-size: 0.6em; 
+        transition: all 0.2s; 
+        cursor: pointer;
+        padding: 0 4px;
+    }
+
+    .slot.active { background-color: #f0fdf4; border-radius: 12px; box-shadow: inset 0 4px 6px rgba(22, 163, 74, 0.1); }
+    
+    .correct-flash { animation: flash 0.4s ease-out; }
+    @keyframes flash { 0% { background-color: transparent; } 50% { background-color: #dcfce7; } 100% { background-color: transparent; } }
+  </style>
+</head>
+<body class="text-slate-800 font-sans">
+  <div id="app"></div>
+
+  <script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5SPY0XNjPWaRAgSmSZx1cSgTTeuACaT17Lx96Oy0TkALO0mgOKA-mr3KuUtFCNVir2Q/exec'; 
+    const TOTAL_TIME = 120;
+    const specialAngles = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330, 360];
+    const integerAngles = [0, 90, 180, 270, 360];
+
+    let state = {
+      mode: 'play',
+      gameType: 'TrigCos', // 已變更為 TrigCos
+      sessionId: SessionManager.getSessionId(),
+      name: SessionManager.getName(),
+      problem: null, 
+      num: "", den: "1",
+      activeField: "num",
+      isIntegerMode: false,
+      isAnswerCorrect: false, 
+      score: 0, combo: 0, maxCombo: 0, timeLeft: TOTAL_TIME,
+      totalSolved: 0, totalPerfect: 0,
+      stats: { totalTime: 0 },
+      attempts: 1, hasModified: false
+    };
+
+    function render() {
+      const app = document.getElementById('app');
+      if (state.mode === 'end') { UISummary.render('app', state); return; }
+
+      app.innerHTML = `
+        <div class="min-h-screen p-4 flex flex-col items-center max-w-6xl mx-auto game-container ${state.isAnswerCorrect ? 'correct-flash' : ''}">
+          <div class="side-info w-full text-center">
+            <div id="header-area"></div>
+            <div class="flex flex-nowrap items-center justify-center gap-2 mb-8 text-slate-800 font-black" style="font-size: var(--fluid-text)">
+              <span style="white-space: nowrap;">cos ${state.problem.angle}° =</span>
+              <div id="main-container" class="fraction-container ${state.isIntegerMode ? 'no-frac' : ''}">
+                <div id="num-display" class="slot num-slot ${state.activeField==='num'?'active':''}" onclick="state.activeField='num';render()"></div>
+                <div class="fraction-line"></div>
+                <div id="den-display" class="slot den-slot ${state.activeField==='den'?'active':''}" onclick="state.activeField='den';render()"></div>
+              </div>
+            </div>
+          </div>
+          <div class="side-keyboard w-full max-w-sm">
+            <div id="keyboard-area"></div>
+          </div>
+        </div>`;
+
+        const katexOptions = {
+            throwOnError: false,
+            displayMode: false,
+        };
+
+        UIHeader.render('header-area', state);
+      UIKeyboard.render('keyboard-area', pressKey, 'trig'); 
+      
+      katex.render(convertToLatex(state.num), document.getElementById('num-display'), katexOptions);
+      katex.render(convertToLatex(state.den), document.getElementById('den-display'), katexOptions);
+    }
+
+    function convertToLatex(str) {
+      if (!str) return "";
+      let latex = str.replace(/\*(\d+)/g, '\\sqrt{$1}');
+      return latex.replace(/\*$/, '\\sqrt{\\phantom{x}}');
+    }
+
+    function pressKey(key) {
+      if (state.isAnswerCorrect || state.mode === 'end') return;
+
+      if (key === 'back') {
+        if (state.activeField === 'den' && state.den === "") {
+          state.activeField = 'num';
+        } else {
+          state[state.activeField] = state[state.activeField].slice(0, -1);
+          state.hasModified = true;
+        }
+      }    
+      else if (key === '/') { if(!state.isIntegerMode) state.activeField = 'den'; }
+      else if (key === '*') { if(!state[state.activeField].includes('*')) state[state.activeField] += '*'; }
+      else if (key === '-') { if(state[state.activeField] === "") state[state.activeField] = "-"; }
+      else { state[state.activeField] += key; }
+      checkAnswer(); render();
+    }
+
+    function parseValue(str) {
+      if (!str || str === "-") return 0;
+      let s = str.replace("-", "");
+      let val = s.includes("*") ? (parseFloat(s.split("*")[0]||1) * Math.sqrt(parseFloat(s.split("*")[1]||1))) : parseFloat(s);
+      return str.startsWith("-") ? -val : val;
+    }
+
+    function checkAnswer() {
+      const uNum = parseValue(state.num);
+      const uDen = state.isIntegerMode ? 1 : parseValue(state.den);
+      if (uDen === 0 || state.num === "") return;
+
+      const userVal = uNum / uDen;
+      // 已更變為 Math.cos
+      const correctVal = Math.cos(state.problem.angle * Math.PI / 180);
+
+      if (Math.abs(userVal - correctVal) < 0.01) handleCorrect();
+    }
+
+    function handleCorrect() {
+      state.isAnswerCorrect = true;
+      const ts = (Date.now() - state.problem.start) / 1000;
+      const result = ScoringEngine.processCorrect(state, ts);
+
+      SyncProtocol.saveLog(SCRIPT_URL, state, {
+        problem: `cos(${state.problem
