@@ -17,35 +17,50 @@
 
   <style>
     :root { 
+        /* 基準字型稍微縮小一點點，增加寬度容錯率 */
         --fluid-text: clamp(1.8rem, 8vw, 3.8rem); 
         --theme-color: #2563eb; 
     }
 
     body { background-color: #f8fafc; overflow-x: hidden; touch-action: manipulation; }
     
+    /* 沿用加減運算的 Slot 樣式並針對分數優化 */
     .fraction-container {
         display: inline-flex;
         flex-direction: column;
         align-items: center;
         vertical-align: middle;
-        min-width: 90px; 
+        
+        min-width: 140px; 
+        margin-left: 10px;
+    }
+
+    .fraction-container {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        vertical-align: middle;
+        min-width: 90px; /* 關鍵：設定固定最小寬度，防止左右晃動 */ /* 從 140px 縮小到 90px，顯著減少佔用空間 */
         margin-left: 8px;
     }
+    /* 分數線同步縮短 */
     .fraction-line { width: 100%; height: 3px; background-color: #1e293b; margin: 3px 0; }
+    /* 整數模式下的底線同步縮短 */
     .no-frac .num-slot { border-bottom: 5px solid #cbd5e1; min-width: 60px; }
     .no-frac .fraction-line, .no-frac .den-slot { display: none; }
 
     .slot { 
+        /* 縮小固定最小寬度高度 */
         min-height: 55px;  
         min-width: 70px;   
         display: flex; 
         align-items: center; 
         justify-content: center;
         font-weight: 800; 
-        font-size: 0.6em; 
+        font-size: 0.6em;  /* 縮小字體比例，避免根號撐大容器 */
         transition: all 0.2s; 
         cursor: pointer;
-        padding: 0 4px;
+        padding: 0 4px; /* 增加一點點內距避免內容貼邊 */
     }
 
     .slot.active { background-color: #f0fdf4; border-radius: 12px; box-shadow: inset 0 4px 6px rgba(22, 163, 74, 0.1); }
@@ -65,7 +80,7 @@
 
     let state = {
       mode: 'play',
-      gameType: 'TrigCos', // 已變更為 TrigCos
+      gameType: 'TrigCos',
       sessionId: SessionManager.getSessionId(),
       name: SessionManager.getName(),
       problem: null, 
@@ -103,12 +118,14 @@
 
         const katexOptions = {
             throwOnError: false,
-            displayMode: false,
+            displayMode: false, // 確保使用行內模式 (Inline)，渲染體積會比 Display 模式小
         };
 
         UIHeader.render('header-area', state);
+      // 這裡使用自定義鍵盤，加入 '*' (根號) 與 '/' (分母)
       UIKeyboard.render('keyboard-area', pressKey, 'trig'); 
       
+      // KaTeX 渲染
       katex.render(convertToLatex(state.num), document.getElementById('num-display'), katexOptions);
       katex.render(convertToLatex(state.den), document.getElementById('den-display'), katexOptions);
     }
@@ -123,11 +140,13 @@
       if (state.isAnswerCorrect || state.mode === 'end') return;
 
       if (key === 'back') {
+        // 如果目前在分母，且分母已經空了，就跳回分子
         if (state.activeField === 'den' && state.den === "") {
-          state.activeField = 'num';
+        state.activeField = 'num';
         } else {
-          state[state.activeField] = state[state.activeField].slice(0, -1);
-          state.hasModified = true;
+        // 否則，刪除目前欄位的最後一個字
+        state[state.activeField] = state[state.activeField].slice(0, -1);
+        state.hasModified = true;
         }
       }    
       else if (key === '/') { if(!state.isIntegerMode) state.activeField = 'den'; }
@@ -150,7 +169,6 @@
       if (uDen === 0 || state.num === "") return;
 
       const userVal = uNum / uDen;
-      // 已更變為 Math.cos
       const correctVal = Math.cos(state.problem.angle * Math.PI / 180);
 
       if (Math.abs(userVal - correctVal) < 0.01) handleCorrect();
@@ -162,4 +180,77 @@
       const result = ScoringEngine.processCorrect(state, ts);
 
       SyncProtocol.saveLog(SCRIPT_URL, state, {
-        problem: `cos(${state.problem
+        problem: `sin(${state.problem.angle})`,
+        ans: state.problem.angle, 
+        userAns: `${state.num}/${state.den}`,
+        ts: ts, earn: result.earn
+      });
+
+      setTimeout(nextProblem, 400);
+    }
+
+    function nextProblem() {
+      let newAngle;
+      do { newAngle = specialAngles[Math.floor(Math.random() * specialAngles.length)]; } 
+      while (newAngle === (state.problem?.angle));
+      
+      state.problem = { angle: newAngle, start: Date.now() };
+      state.isIntegerMode = integerAngles.includes(newAngle);
+      state.num = ""; 
+      state.den = state.isIntegerMode ? "1" : "";
+      // state.den = ""; 
+      state.activeField = "num";
+      state.isAnswerCorrect = false; state.hasModified = false;
+      render();
+    }
+
+    // 啟動計時器等邏輯 (與加減運算一致)
+    function startTimer() {
+      let timer = setInterval(() => {
+        state.timeLeft--;
+        if (state.timeLeft <= 0) { clearInterval(timer); state.mode = 'end'; SyncProtocol.saveSummary(SCRIPT_URL, state); }
+        render();
+      }, 1000);
+    }
+
+    UIHeader.initTheme(); nextProblem(); startTimer(); render();
+
+  window.addEventListener('keydown', (e) => {
+    // 如果目前不是在遊戲模式，則不反應
+    if (state.mode !== 'play') return;
+  
+    const key = e.key;
+  
+    // 1. 處理數字 0-9
+    if (key >= '0' && key <= '9') {
+      pressKey(key);
+    } 
+    // 2. 處理負號
+    else if (key === '-') {
+      pressKey('-');
+    } 
+    // 3. 處理根號 (對應鍵盤上的星號 *)
+    else if (key === '*' || key === 'r') {
+      pressKey('*');
+    } 
+    // 4. 處理分母切換 (對應鍵盤上的斜線 /)
+    else if (key === '/') {
+      // 阻止瀏覽器預設的搜尋功能 (部分瀏覽器按 / 會跳出搜尋)
+      e.preventDefault(); 
+      pressKey('/');
+    } 
+    // 5. 處理刪除
+    else if (key === 'Backspace') {
+      pressKey('back');
+    }
+    // 6. 處理 Enter (手動換題，或在某些情況下作為確認)
+    else if (key === 'Enter') {
+      // 如果想要 Enter 也能判定，可以呼叫 checkAnswer()，或維持 nextProblem()
+      if (state.isAnswerCorrect) {
+        nextProblem();
+      }
+    }
+  });
+  </script>
+</body>
+</html>
