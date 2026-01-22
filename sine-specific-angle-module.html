@@ -23,6 +23,18 @@
     }
 
     body { background-color: #f8fafc; overflow-x: hidden; touch-action: manipulation; }
+
+    /* 關鍵：固定整個題目與答案行的高度 */
+    .game-row-container {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+        /* 設定一個固定高度，確保分數模式與整數模式佔用的垂直空間一致 */
+        height: 160px; 
+    }
     
     /* 沿用加減運算的 Slot 樣式並針對分數優化 */
     .fraction-container {
@@ -30,18 +42,11 @@
         flex-direction: column;
         align-items: center;
         vertical-align: middle;
-        
-        min-width: 140px; 
-        margin-left: 10px;
-    }
-
-    .fraction-container {
-        display: inline-flex;
-        flex-direction: column;
-        align-items: center;
-        vertical-align: middle;
         min-width: 90px; /* 關鍵：設定固定最小寬度，防止左右晃動 */ /* 從 140px 縮小到 90px，顯著減少佔用空間 */
         margin-left: 8px;
+        /* 即使在整數模式，也維持容器高度，防止下方元素上移 */
+        justify-content: center;
+        height: 100%;
     }
     /* 分數線同步縮短 */
     .fraction-line { width: 100%; height: 3px; background-color: #1e293b; margin: 3px 0; }
@@ -49,10 +54,27 @@
     .no-frac .num-slot { border-bottom: 5px solid #cbd5e1; min-width: 60px; }
     .no-frac .fraction-line, .no-frac .den-slot { display: none; }
 
+    /* 當隱藏分母時，利用佔位符保持高度，而不是直接 display: none */
+    .no-frac .den-slot, .no-frac .fraction-line {
+        visibility: hidden; /* 改用 visibility 保持佈局空間 */
+        height: 0;
+        margin: 0;
+    }
+    
+    .no-frac .fraction-line {
+        height: 3px; /* 依然維持高度佔位但透明 */
+        background-color: transparent;
+    }
+
+    .no-frac .num-slot {
+        /* 整數模式時，讓分子稍微位移到中心點，或維持原位但確保容器不縮水 */
+        border-bottom: 5px solid #cbd5e1;
+    }
+
     .slot { 
         /* 縮小固定最小寬度高度 */
-        min-height: 55px;  
-        min-width: 70px;   
+        min-height: 60px;  /* 稍微調整固定高度 */
+        min-width: 75px;
         display: flex; 
         align-items: center; 
         justify-content: center;
@@ -102,7 +124,7 @@
         <div class="min-h-screen p-4 flex flex-col items-center max-w-6xl mx-auto game-container ${state.isAnswerCorrect ? 'correct-flash' : ''}">
           <div class="side-info w-full text-center">
             <div id="header-area"></div>
-            <div class="flex flex-nowrap items-center justify-center gap-2 mb-8 text-slate-800 font-black" style="font-size: var(--fluid-text)">
+            <div class="game-row-container text-slate-800 font-black" style="font-size: var(--fluid-text)">
               <span style="white-space: nowrap;">sin ${state.problem.angle}° =</span>
               <div id="main-container" class="fraction-container ${state.isIntegerMode ? 'no-frac' : ''}">
                 <div id="num-display" class="slot num-slot ${state.activeField==='num'?'active':''}" onclick="state.activeField='num';render()"></div>
@@ -116,7 +138,7 @@
           </div>
         </div>`;
 
-        const katexOptions = {
+      const katexOptions = {
             throwOnError: false,
             displayMode: false, // 確保使用行內模式 (Inline)，渲染體積會比 Display 模式小
         };
