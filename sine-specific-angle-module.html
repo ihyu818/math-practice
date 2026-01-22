@@ -138,13 +138,21 @@
 
     function pressKey(key) {
       if (state.isAnswerCorrect || state.mode === 'end') return;
-      
-      if (key === 'back') { state[state.activeField] = state[state.activeField].slice(0, -1); state.hasModified = true; }
+
+      if (key === 'back') {
+        // 如果目前在分母，且分母已經空了，就跳回分子
+        if (state.activeField === 'den' && state.den === "") {
+        state.activeField = 'num';
+        } else {
+        // 否則，刪除目前欄位的最後一個字
+        state[state.activeField] = state[state.activeField].slice(0, -1);
+        state.hasModified = true;
+        }
+      }    
       else if (key === '/') { if(!state.isIntegerMode) state.activeField = 'den'; }
       else if (key === '*') { if(!state[state.activeField].includes('*')) state[state.activeField] += '*'; }
       else if (key === '-') { if(state[state.activeField] === "") state[state.activeField] = "-"; }
       else { state[state.activeField] += key; }
-      
       checkAnswer(); render();
     }
 
@@ -188,7 +196,9 @@
       
       state.problem = { angle: newAngle, start: Date.now() };
       state.isIntegerMode = integerAngles.includes(newAngle);
-      state.num = ""; state.den = state.isIntegerMode ? "1" : "";
+      state.num = ""; 
+      state.den = state.isIntegerMode ? "1" : "";
+      // state.den = ""; 
       state.activeField = "num";
       state.isAnswerCorrect = false; state.hasModified = false;
       render();
