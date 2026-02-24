@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Trigonometry Lab - Math Lab</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/session-manager.js?v=20260114"></script>
+  <script src="js/ui-header.js?v=20260119"></script>
+  <script src="js/ui-keyboard-root.js?v=20260114"></script>
+  <script src="js/ui-keyboard-trig.js"></script>
+  <script src="js/scoring-engine.js?v=20260114"></script>
+  <script src="js/ui-summary.js?v=20260114"></script>
+  <script src="js/sync-protocol.js?v=20260114"></script>
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+
+  <style>
+    :root { 
+        /* 基準字型稍微縮小一點點，增加寬度容錯率 */
+        --fluid-text: clamp(1.8rem, 8vw, 3.8rem); 
+        --theme-color: #2563eb; 
+    }
+
+    body { background-color: #f8fafc; overflow-x: hidden; touch-action: manipulation; }
+    
+    /* 沿用加減運算的 Slot 樣式並針對分數優化 */
+    .fraction-container {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        vertical-align: middle;
+        
+        min-width: 140px; 
+        margin-left: 10px;
+    }
+
+    /*
+    .fraction-container {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        vertical-align: middle;
+        min-width: 90px; /* 關鍵：設定固定最小寬度，防止左右晃動 */ /* 從 140px 縮小到 90px，顯著減少佔用空間 */
+        margin-left: 8px;
+    /*}*/
+
+    .fraction-container {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        vertical-align: middle;
+        min-width: 90px;
+        margin-left: 8px;
+        justify-content: center;
+        height: 160px; /* 維持固定高度防止跳動 */
+    }
+
+
+    /* 分數線同步縮短 */
+    /*
+    .fraction-line { width: 100%; height: 3px; background-color: #1e293b; margin: 3px 0; }
+    /* 整數模式下的底線同步縮短 */
+    /*
+    .no-frac .num-slot { border-bottom: 5px solid #cbd5e1; min-width: 60px; }
+    .no-frac .fraction-line, .no-frac .den-slot { display: none; }
+    */
+    /* 移除 .no-frac .den-slot { display: none; } 
+       改為根據內容自動判斷是否顯示橫線 */
+
+    .fraction-line { 
+        width: 100%; 
+        height: 3px; 
+        background-color: #1e293b; 
+        margin: 3px 0; 
+    }
+
+    .hide-line { visibility: hidden; }
+
+    .slot { 
+        /* 縮小固定最小寬度高度 */
+        min-height: 55px;  
+        min-width: 70px;   
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        font-weight: 800; 
+        font-size: 0.6em;  /* 縮小字體比例，避免根號撐大容器 */
+        transition: all 0.2s; 
+        cursor: pointer;
+        padding: 0 4px; /* 增加一點點內距避免內容貼邊 */
+    }
+
+    .slot.active { background-color: #f0fdf4; border-radius: 12px; box-shadow: inset 0 4px 6px rgba(22, 163, 74, 0.1); }
+    
+    .correct-flash { animation: flash 0.4s ease-out; }
+    @keyframes flash { 0% { background-color: transparent; } 50% { background-color: #dcfce7; } 100% { background-color: transparent; } }
+  </style>
+</head>
+<body class="text-slate-800 font-sans">
+  <div id="app"></div>
+
+  <script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5SPY0XNjPWaRAgSmSZx1cSgTTeuACaT17Lx96Oy0TkALO0mgOKA-mr3KuUtFCNVir2Q/exec'; 
+    const TOTAL_TIME = 120;
+    const specialAngles = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330, 360];
+    const integerAngles = [0, 90, 180, 270, 360];
+
+    let state = {
+      mode: 'play',
+      gameType: 'TrigSin',
+      sessionId: SessionManager.getSessionId(),
+      name: SessionManager.getName(),
+      problem: null, 
+      num: "", den: "1",
+      activeField: "num",
+      isIntegerMode: false,
+      isAnswerCorrect: false, 
+      score: 0, combo: 0, maxCombo: 0, timeLeft: TOTAL_TIME,
+      totalSolved: 0, totalPerfect: 0,
+      stats: { totalTime: 0 },
+      attempts: 1, hasModified: false
+    };
+
+    /*
+    function render() {
+      const app = document.getElementById('app');
+      if (state.mode === 'end') { UISummary.render('app', state); return; }
+
+      app.innerHTML = `
+        <div class="min-h-screen p-4 flex flex-col items-center max-w-6xl mx-auto game-container ${state.isAnswerCorrect ? 'correct-flash' : ''}">
+          <div class="side-info w-full text-center">
+            <div id="header-area"></div>
+            <div class="flex flex-nowrap items-center justify-center gap-2 mb-8 text-slate-800 font-black" style="font-size: var(--fluid-text)">
+              <span style="white-space: nowrap;">sin ${state.problem.angle}° =</span>
+              <div id="main-container" class="fraction-container ${state.isIntegerMode ? 'no-frac' : ''}">
+                <div id="num-display" class="slot num-slot ${state.activeField==='num'?'active':''}" onclick="state.activeField='num';render()"></div>
+                <div class="fraction-line"></div>
+                <div id="den-display" class="slot den-slot ${state.activeField==='den'?'active':''}" onclick="state.activeField='den';render()"></div>
+              </div>
+            </div>
+          </div>
+          <div class="side-keyboard w-full max-w-sm">
+            <div id="keyboard-area"></div>
+          </div>
+        </div>`;
+
+        const katexOptions = {
+            throwOnError: false,
+            displayMode: false, // 確保使用行內模式 (Inline)，渲染體積會比 Display 模式小
+        };
+
+        UIHeader.render('header-area', state);
+      // 這裡使用自定義鍵盤，加入 '*' (根號) 與 '/' (分母)
+      // UIKeyboard.render('keyboard-area', pressKey, 'trig'); 
+      UITrigKeyboard.render('keyboard-area', pressKey); 
+      
+      // KaTeX 渲染
+      katex.render(convertToLatex(state.num), document.getElementById('num-display'), katexOptions);
+      katex.render(convertToLatex(state.den), document.getElementById('den-display'), katexOptions);
+    }*/
+
+    function render() {
+      const app = document.getElementById('app');
+      if (state.mode === 'end') { UISummary.render('app', state); return; }
+
+      // 判斷是否需要顯示分數線：當分母不是 1 時顯示，或者分母為空（等待輸入）時顯示
+      const showLine = state.den !== "1" && state.den !== "";
+
+      app.innerHTML = `
+        <div class="min-h-screen p-4 flex flex-col items-center max-w-6xl mx-auto game-container ${state.isAnswerCorrect ? 'correct-flash' : ''}">
+          <div class="side-info w-full text-center">
+            <div id="header-area"></div>
+            <div class="game-row-container text-slate-800 font-black" style="font-size: var(--fluid-text)">
+              <span style="white-space: nowrap;">sin ${state.problem.angle}° =</span>
+              <div id="main-container" class="fraction-container">
+                <div id="num-display" class="slot num-slot active"></div>
+                <div class="fraction-line ${!showLine ? 'hide-line' : ''}"></div>
+                <div id="den-display" class="slot den-slot ${!showLine ? 'hide-line' : ''}"></div>
+              </div>
+            </div>
+          </div>
+          <div class="side-keyboard w-full max-w-sm">
+            <div id="keyboard-area"></div>
+          </div>
+        </div>`;
+
+      UIHeader.render('header-area', state);
+      UITrigKeyboard.render('keyboard-area', pressKey); 
+      
+      // KaTeX 渲染
+      katex.render(convertToLatex(state.num), document.getElementById('num-display'), { displayMode: true });
+      if (showLine) {
+        katex.render(convertToLatex(state.den), document.getElementById('den-display'), { displayMode: true });
+      }
+    }
+
+
+    function convertToLatex(str) {
+      if (!str) return "";
+      let latex = str.replace(/\*(\d+)/g, '\\sqrt{$1}');
+      return latex.replace(/\*$/, '\\sqrt{\\phantom{x}}');
+    }
+
+    
+    /*
+    function pressKey(key) {
+      if (state.isAnswerCorrect || state.mode === 'end') return;
+      
+      if (key === 'back') { state[state.activeField] = state[state.activeField].slice(0, -1); state.hasModified = true; }
+      else if (key === '/') { if(!state.isIntegerMode) state.activeField = 'den'; }
+      else if (key === '*') { if(!state[state.activeField].includes('*')) state[state.activeField] += '*'; }
+      else if (key === '-') { if(state[state.activeField] === "") state[state.activeField] = "-"; }
+      else { state[state.activeField] += key; }
+      
+      checkAnswer(); render();
+    }
+    */
+
+    /*
+    function pressKey(val) {
+      if (state.isAnswerCorrect || state.mode === 'end') return;
+
+      // 定義快速填值的對應表 (n: 分子, d: 分母)
+      const fastValues = {
+        '1/2':   { n: '1',  d: '2' },
+        '√3/2':  { n: '*3', d: '2' },
+        '√2/2':  { n: '*2', d: '2' },
+        '√3':    { n: '*3', d: '1' },
+        '1/√3':  { n: '1',  d: '*3' },
+        '1':     { n: '1',  d: '1' },
+        '0':     { n: '0',  d: '1' }
+      };
+
+      if (fastValues[val]) {
+        // 點擊數值鍵：直接填入分子與分母
+        // state.num = fastValues[val].n;
+        // state.den = fastValues[val].d;
+        // state.hasModified = true;
+
+        // 關鍵修正：檢查原本是否有負號
+        const hasNegative = state.num.startsWith('-');
+    
+        // 填入數值，並根據原本狀態決定是否補回負號
+        state.num = hasNegative ? '-' + fastValues[val].n : fastValues[val].n;
+        state.den = fastValues[val].d;
+        state.hasModified = true;
+      } 
+      else if (val === '-') {
+        // 點擊負號：切換分子的正負號
+        if (state.num.startsWith('-')) {
+          state.num = state.num.slice(1);
+        } else {
+          state.num = '-' + state.num;
+        }
+        state.hasModified = true;
+      } 
+      else if (val === 'undefined') {
+        // 點擊無意義：可以用一個特殊值代表，例如空值或 1/0
+        state.num = "1";
+        state.den = "0"; 
+        state.hasModified = true;
+      }
+      else if (val === 'back') {
+        // 點擊倒退：清空目前數值
+        state.num = "";
+        state.den = "1";
+        state.hasModified = false;
+      }
+
+      checkAnswer(); 
+      render();
+    }*/
+
+    function pressKey(val) {
+      if (state.isAnswerCorrect || state.mode === 'end') return;
+
+      const fastValues = {
+        '1/2':   { n: '1',  d: '2' },
+        '√3/2':  { n: '*3', d: '2' },
+        '√2/2':  { n: '*2', d: '2' },
+        '√3':    { n: '*3', d: '1' },
+        '1/√3':  { n: '1',  d: '*3' },
+        '1':     { n: '1',  d: '1' },
+        '0':     { n: '0',  d: '1' }
+      };
+
+      if (fastValues[val]) {
+        // 保留負號狀態
+        const hasNegative = state.num.startsWith('-');
+        state.num = hasNegative ? '-' + fastValues[val].n : fastValues[val].n;
+        state.den = fastValues[val].d;
+        state.hasModified = true;
+      } 
+      else if (val === '-') {
+        // 切換負號
+        state.num = state.num.startsWith('-') ? state.num.slice(1) : '-' + state.num;
+        state.hasModified = true;
+      } 
+      else if (val === 'back') {
+        state.num = ""; 
+        state.den = ""; 
+        state.hasModified = false;
+      }
+
+      checkAnswer(); 
+      render();
+    }
+
+    function parseValue(str) {
+      if (!str || str === "-") return 0;
+      let s = str.replace("-", "");
+      let val = s.includes("*") ? (parseFloat(s.split("*")[0]||1) * Math.sqrt(parseFloat(s.split("*")[1]||1))) : parseFloat(s);
+      return str.startsWith("-") ? -val : val;
+    }
+
+    function checkAnswer() {
+      const uNum = parseValue(state.num);
+      const uDen = state.isIntegerMode ? 1 : parseValue(state.den);
+      if (uDen === 0 || state.num === "") return;
+
+      const userVal = uNum / uDen;
+      const correctVal = Math.sin(state.problem.angle * Math.PI / 180);
+
+      if (Math.abs(userVal - correctVal) < 0.01) handleCorrect();
+    }
+
+    function handleCorrect() {
+      state.isAnswerCorrect = true;
+      const ts = (Date.now() - state.problem.start) / 1000;
+      const result = ScoringEngine.processCorrect(state, ts);
+
+      SyncProtocol.saveLog(SCRIPT_URL, state, {
+        problem: `sin(${state.problem.angle})`,
+        ans: state.problem.angle, 
+        userAns: `${state.num}/${state.den}`,
+        ts: ts, earn: result.earn
+      });
+
+      setTimeout(nextProblem, 400);
+    }
+
+    /*
+    function nextProblem() {
+      let newAngle;
+      do { newAngle = specialAngles[Math.floor(Math.random() * specialAngles.length)]; } 
+      while (newAngle === (state.problem?.angle));
+      
+      state.problem = { angle: newAngle, start: Date.now() };
+      state.isIntegerMode = integerAngles.includes(newAngle);
+      state.num = ""; state.den = state.isIntegerMode ? "1" : "";
+      state.activeField = "num";
+      state.isAnswerCorrect = false; state.hasModified = false;
+      render();
+    }*/
+
+    function nextProblem() {
+      let newAngle;
+      do { 
+        newAngle = specialAngles[Math.floor(Math.random() * specialAngles.length)]; 
+      } while (newAngle === (state.problem?.angle));
+      
+      state.problem = { angle: newAngle, start: Date.now() };
+      
+      // 全部清空，等待學生按按鈕
+      state.num = ""; 
+      state.den = ""; 
+      state.isAnswerCorrect = false; 
+      state.hasModified = false;
+      render();
+    }
+
+    // 啟動計時器等邏輯 (與加減運算一致)
+    function startTimer() {
+      let timer = setInterval(() => {
+        state.timeLeft--;
+        if (state.timeLeft <= 0) { clearInterval(timer); state.mode = 'end'; SyncProtocol.saveSummary(SCRIPT_URL, state); }
+        render();
+      }, 1000);
+    }
+
+    UIHeader.initTheme(); nextProblem(); startTimer(); render();
+
+  window.addEventListener('keydown', (e) => {
+    // 如果目前不是在遊戲模式，則不反應
+    if (state.mode !== 'play') return;
+  
+    const key = e.key;
+  
+    // 1. 處理數字 0-9
+    if (key >= '0' && key <= '9') {
+      pressKey(key);
+    } 
+    // 2. 處理負號
+    else if (key === '-') {
+      pressKey('-');
+    } 
+    // 3. 處理根號 (對應鍵盤上的星號 *)
+    else if (key === '*' || key === 'r') {
+      pressKey('*');
+    } 
+    // 4. 處理分母切換 (對應鍵盤上的斜線 /)
+    else if (key === '/') {
+      // 阻止瀏覽器預設的搜尋功能 (部分瀏覽器按 / 會跳出搜尋)
+      e.preventDefault(); 
+      pressKey('/');
+    } 
+    // 5. 處理刪除
+    else if (key === 'Backspace') {
+      pressKey('back');
+    }
+    // 6. 處理 Enter (手動換題，或在某些情況下作為確認)
+    else if (key === 'Enter') {
+      // 如果想要 Enter 也能判定，可以呼叫 checkAnswer()，或維持 nextProblem()
+      if (state.isAnswerCorrect) {
+        nextProblem();
+      }
+    }
+  });
+  </script>
+</body>
+</html>
+
+
